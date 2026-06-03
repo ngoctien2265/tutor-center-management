@@ -62,6 +62,53 @@ def default_monthly_fee(subject='', grade=''):
     return Decimal('2000000')
 
 
+def schedules_overlap(first, second):
+    for a in first:
+        for b in second:
+            if a.get('dayOfWeek') != b.get('dayOfWeek'):
+                continue
+            if a.get('startTime') and a.get('endTime') and b.get('startTime') and b.get('endTime'):
+                if not (a['endTime'] <= b['startTime'] or a['startTime'] >= b['endTime']):
+                    return True
+    return False
+
+
+def student_has_schedule_conflict(student, class_obj):
+    new_slots = parse_schedule_text(class_obj.schedule_detail)
+    if not new_slots:
+        return False
+    active_enrollment_statuses = ['unpaid', 'paid', 'active', 'overdue']
+    active_class_statuses = ['waiting_parent', 'waiting_tutor', 'assigned', 'teaching']
+    existing = Enrollment.objects.select_related('class_id').filter(
+        student_id=student,
+        status__in=active_enrollment_statuses,
+        class_id__status__in=active_class_statuses,
+    )
+    for enrollment in existing:
+        if schedules_overlap(new_slots, parse_schedule_text(enrollment.class_id.schedule_detail)):
+            return True
+    return False
+
+
+def open_class_payload(cls):
+    return {
+        'classId': cls.id,
+        'subject': cls.subject_name,
+        'gradeLevel': cls.grade_level,
+        'schedule': parse_schedule_text(cls.schedule_detail),
+        'scheduleDetail': cls.schedule_detail,
+        'sessionsPerWeek': cls.sessions_per_week,
+        'totalSessions': cls.total_sessions,
+        'startDate': cls.start_date,
+        'salaryPerMonth': cls.tuition_fee or cls.salary_per_month,
+        'location': cls.address_teaching,
+        'requirements': cls.requirements,
+        'teachingMode': cls.teaching_mode,
+        'expectedHourlyRate': cls.expected_hourly_rate,
+        'status': cls.status.upper(),
+    }
+
+
 def ensure_tuition_transaction(enrollment):
     existing = Transaction.objects.filter(enrollment_id=enrollment, type='tuition_fee').order_by('-created_at').first()
     if existing:
@@ -252,6 +299,42 @@ def classes(request):
     if guard:
         return guard
     return ok([class_payload(enrollment) for enrollment in customer_enrollments(student)])
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def available_classes(request):
+    student, students, guard = require_customer(request)
+    if guard:
+        return guard
+    items = []
+    enrolled_class_ids = set(Enrollment.objects.filter(student_id=student).values_list('class_id', flat=True))
+    for cls in Class.objects.filter(status='open').order_by('-created_at'):
+        if cls.id in enrolled_class_ids:
+            continue
+        if student_has_schedule_conflict(student, cls):
+            continue
+        items.append(open_class_payload(cls))
+    return ok(items)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def enroll_available_class(request, class_id):
+    student, students, guard = require_customer(request)
+    if guard:
+        return guard
+    try:
+        cls = Class.objects.get(pk=class_id, status='open')
+    except Class.DoesNotExist:
+        return fail('Không tìm thấy lớp có sẵn.', status.HTTP_404_NOT_FOUND)
+    if Enrollment.objects.filter(class_id=cls, student_id=student).exists():
+        return fail('Bạn đã đăng ký lớp này.')
+    if student_has_schedule_conflict(student, cls):
+        return fail('Lịch học của lớp này trùng với thời khóa biểu hiện tại.')
+    enrollment = Enrollment.objects.create(class_id=cls, student_id=student, status='unpaid')
+    ensure_tuition_transaction(enrollment)
+    return ok(class_payload(enrollment), 'Đã đăng ký lớp học. Vui lòng thanh toán học phí để bắt đầu học.', status.HTTP_201_CREATED)
 
 
 @api_view(['GET'])

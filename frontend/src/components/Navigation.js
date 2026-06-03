@@ -65,7 +65,6 @@ function Navigation({ onLogout }) {
   const adminLinks = [
     ['▦', '/dashboard', 'Tổng quan'],
     ['♚', '/users', 'Quản lý tài khoản'],
-    ['▥', '/reports', 'Báo cáo thống kê'],
     ['$', '/finance', 'Quản lý tài chính'],
   ];
 
@@ -88,6 +87,7 @@ function Navigation({ onLogout }) {
   const customerLinks = [
     ['▦', '/customer', 'Tổng quan'],
     ['⌕', '/customer?tab=request', 'Đăng ký tìm gia sư'],
+    ['▰', '/customer?tab=available', 'Lớp có sẵn'],
     ['▰', '/customer?tab=classes', 'Lớp đang học'],
     ['⌚', '/customer?tab=timetable', 'Thời khóa biểu'],
   ];

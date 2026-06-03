@@ -61,7 +61,10 @@ function Login({ onLoginSuccess }) {
       }
     } catch (error) {
       console.error('Login failed:', error);
-      if (error.response?.status === 401) {
+      const message = error.response?.data?.detail;
+      if (message?.includes('chờ admin duyệt')) {
+        toast.error(message);
+      } else if (error.response?.status === 401) {
         toast.error('Sai tên đăng nhập hoặc mật khẩu');
       } else {
         toast.error('Đăng nhập thất bại. Vui lòng thử lại.');

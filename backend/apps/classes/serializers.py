@@ -68,6 +68,6 @@ class ClassCreateUpdateSerializer(serializers.ModelSerializer):
             'subject_name', 'grade_level', 'schedule_detail', 'sessions_per_week',
             'salary_per_month', 'tuition_fee', 'address_teaching', 'requirements', 'admin_note',
             'teaching_mode', 'expected_hourly_rate', 'status', 'tutor',
-            'start_date'
+            'start_date', 'total_sessions'
 
         ]

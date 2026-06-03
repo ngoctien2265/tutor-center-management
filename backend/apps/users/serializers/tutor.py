@@ -43,12 +43,15 @@ class TutorProfileSerializer(serializers.ModelSerializer):
     teachableSubjects = serializers.CharField(source='teachable_subjects', required=False, allow_blank=True, allow_null=True)
     teachableGrades = serializers.CharField(source='teachable_grades', required=False, allow_blank=True, allow_null=True)
     teachingAreas = serializers.CharField(source='teaching_areas', required=False, allow_blank=True, allow_null=True)
+    bankName = serializers.CharField(source='bank_name', required=False, allow_blank=True, allow_null=True)
+    bankBranch = serializers.CharField(source='bank_branch', required=False, allow_blank=True, allow_null=True)
+    bankAccountNumber = serializers.CharField(source='bank_account_number', required=False, allow_blank=True, allow_null=True)
     rating = serializers.FloatField(read_only=True)
     isVerified = serializers.BooleanField(source='is_verified', read_only=True)
 
     class Meta:
         model = Tutor
-        fields = ['id','fullName','email','phone','dateOfBirth','gender','address','avatarUrl','bio','status','university','major','teachableSubjects','teachableGrades','teachingAreas','rating','isVerified']
+        fields = ['id','fullName','email','phone','dateOfBirth','gender','address','avatarUrl','bio','status','university','major','teachableSubjects','teachableGrades','teachingAreas','bankName','bankBranch','bankAccountNumber','rating','isVerified']
 
     def to_representation(self, instance):
         data = super().to_representation(instance)

@@ -215,14 +215,16 @@ class TutorService:
         qs = qs.order_by('-created_at')
         if not tutor:
             return qs
-        
+
+        applied_class_ids = set(ClassApplication.objects.filter(tutor=tutor).values_list('class_obj_id', flat=True))
         tutor_avails = list(tutor.availability.all())
+        active_classes = list(Class.objects.filter(tutor=tutor, status__in=['assigned', 'waiting_parent', 'waiting_tutor', 'teaching']))
         classes = []
         for class_obj in qs:
-            if TutorService._is_schedule_match(class_obj, tutor_avails):
+            if class_obj.id in applied_class_ids:
+                continue
+            if TutorService._is_schedule_match(class_obj, tutor_avails) and not TutorService._has_overlap(class_obj, active_classes):
                 classes.append(class_obj)
-        
-        active_classes = list(Class.objects.filter(tutor=tutor, status__in=['assigned', 'waiting_tutor', 'teaching']))
         subjects = TutorService._tokens(tutor.teachable_subjects)
         grades = TutorService._tokens(tutor.teachable_grades)
         areas = TutorService._tokens(tutor.teaching_areas)

@@ -113,7 +113,7 @@ class StudentRegisterSerializer(BaseRegisterSerializer):
         }
 
         user = self.create_user(validated_data, 'student')
-        user.status = 'inactive'
+        user.status = 'active'
         user.is_active = True
         user.save(update_fields=['status', 'is_active'])
 

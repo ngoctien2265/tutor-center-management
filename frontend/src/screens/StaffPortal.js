@@ -5,15 +5,28 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import './Dashboard.css';
+import './TutorPortal.css';
 
 const tabKeys = ['dashboard', 'requests', 'createClass', 'classes', 'payments'];
-const days = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
+const STAFF_TIMETABLE_DAYS = [
+  { code: 'MONDAY', label: 'Thứ 2' },
+  { code: 'TUESDAY', label: 'Thứ 3' },
+  { code: 'WEDNESDAY', label: 'Thứ 4' },
+  { code: 'THURSDAY', label: 'Thứ 5' },
+  { code: 'FRIDAY', label: 'Thứ 6' },
+  { code: 'SATURDAY', label: 'Thứ 7' },
+  { code: 'SUNDAY', label: 'Chủ nhật' },
+];
+const STAFF_START_HOUR = 7;
+const STAFF_END_HOUR = 22;
+const STAFF_HOURS = Array.from({ length: STAFF_END_HOUR - STAFF_START_HOUR }, (_, i) => STAFF_START_HOUR + i);
 const grades = Array.from({ length: 12 }, (_, i) => `Lớp ${i + 1}`);
 const subjects = ['Toán', 'Vật lý', 'Hóa học', 'Tiếng Anh', 'Sinh học', 'Ngữ văn'];
 
 const initialClassForm = {
-  subject_name: '', grade_level: '', schedule_detail: '', sessions_per_week: 2,
-  salary_per_month: '', tuition_fee: '', address_teaching: '', requirements: '',
+  subject_name: '', grade_level: '', schedule_detail: '', sessions_per_week: 1,
+  total_sessions: '', start_date: '', teaching_mode: 'offline', expected_hourly_rate: '',
+  salary_per_month: '', tuition_fee: '', address_teaching: '', requirements: '', scheduleCells: {},
 };
 
 const statusVi = {
@@ -93,6 +106,8 @@ function StaffPortal() {
   const [absenceRequests, setAbsenceRequests] = useState([]);
   const [applications, setApplications] = useState([]);
   const [classForm, setClassForm] = useState(initialClassForm);
+  const [classScheduleDragging, setClassScheduleDragging] = useState(false);
+  const [classScheduleDragAction, setClassScheduleDragAction] = useState(null);
   const [filter, setFilter] = useState({ subject: '', grade: '', schedule: '', area: '' });
   const [hasSearched, setHasSearched] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
@@ -234,14 +249,94 @@ function StaffPortal() {
     status: row.status || 'Đã tính',
   })), [finance]);
 
+  const buildClassScheduleDetail = () => {
+    const selectedSlotsMap = {};
+    Object.entries(classForm.scheduleCells || {}).forEach(([key, value]) => {
+      if (!value) return;
+      const [dayCode, hourStr] = key.split('-');
+      const hour = Number(hourStr);
+      if (!selectedSlotsMap[dayCode]) selectedSlotsMap[dayCode] = [];
+      selectedSlotsMap[dayCode].push(hour);
+    });
+    const selectedSlots = [];
+    Object.keys(selectedSlotsMap).forEach((dayCode) => {
+      const hours = selectedSlotsMap[dayCode].sort((a, b) => a - b);
+      let startHour = hours[0];
+      let endHour = hours[0] + 1;
+      const dayLabel = (STAFF_TIMETABLE_DAYS.find((d) => d.code === dayCode) || {}).label || dayCode;
+      for (let i = 1; i < hours.length; i += 1) {
+        if (hours[i] === endHour) endHour = hours[i] + 1;
+        else {
+          selectedSlots.push(`${dayLabel} ${String(startHour).padStart(2, '0')}:00-${String(endHour).padStart(2, '0')}:00`);
+          startHour = hours[i];
+          endHour = hours[i] + 1;
+        }
+      }
+      selectedSlots.push(`${dayLabel} ${String(startHour).padStart(2, '0')}:00-${String(endHour).padStart(2, '0')}:00`);
+    });
+    return selectedSlots;
+  };
+
+  const handleClassScheduleMouseDown = (day, hour, e) => {
+    if (e.button !== 0) return;
+    const key = `${day}-${hour}`;
+    const willSelect = !classForm.scheduleCells[key];
+    setClassScheduleDragging(true);
+    setClassScheduleDragAction(willSelect);
+    setClassForm((prev) => ({ ...prev, scheduleCells: { ...prev.scheduleCells, [key]: willSelect } }));
+  };
+  const handleClassScheduleMouseEnter = (day, hour) => {
+    if (!classScheduleDragging || classScheduleDragAction === null) return;
+    const key = `${day}-${hour}`;
+    setClassForm((prev) => ({ ...prev, scheduleCells: { ...prev.scheduleCells, [key]: classScheduleDragAction } }));
+  };
+  const handleClassScheduleDragEnd = () => {
+    setClassScheduleDragging(false);
+    setClassScheduleDragAction(null);
+  };
+
+  const calculateClassFees = () => {
+    const slots = buildClassScheduleDetail();
+    const weeklySelectedHours = Object.values(classForm.scheduleCells || {}).filter(Boolean).length;
+    const sessionsPerWeek = slots.length;
+    const totalSessions = Number(classForm.total_sessions || 0);
+    const hourlyRate = Number(classForm.expected_hourly_rate || 0);
+    const averageHoursPerSession = sessionsPerWeek ? weeklySelectedHours / sessionsPerWeek : 1;
+    const monthlySessions = totalSessions > 0
+      ? Math.min(totalSessions, sessionsPerWeek * 4.33)
+      : sessionsPerWeek * 4.33;
+    const monthlyHours = monthlySessions * averageHoursPerSession;
+    const salaryPerMonth = hourlyRate > 0 && sessionsPerWeek > 0 ? Math.round(hourlyRate * monthlyHours) : 0;
+    return {
+      slots,
+      sessionsPerWeek,
+      salaryPerMonth,
+      tuitionFee: salaryPerMonth ? Math.round(salaryPerMonth * 1.25) : 0,
+    };
+  };
+
   const submitClass = async (e) => {
     e.preventDefault();
-    if (!classForm.subject_name || !classForm.grade_level || !classForm.address_teaching || !classForm.schedule_detail || !classForm.salary_per_month) {
-      toast.error('Vui lòng nhập đầy đủ môn học, lớp, địa điểm, lịch học và tiền lương gia sư.'); return;
+    const { slots: selectedSlots, sessionsPerWeek, salaryPerMonth, tuitionFee } = calculateClassFees();
+    const hourlyRate = Number(classForm.expected_hourly_rate || 0);
+    if (!classForm.subject_name || !classForm.grade_level || !classForm.address_teaching || !selectedSlots.length || hourlyRate <= 0) {
+      toast.error('Vui lòng nhập đầy đủ môn học, lớp, địa điểm, thời khóa biểu và lương theo giờ.'); return;
     }
     try {
-      const salary = Number(classForm.salary_per_month || 0);
-      await axios.post('/v1/staff/classes', { ...classForm, salary_per_month: salary, tuition_fee: Math.round(salary * 1.25) });
+      await axios.post('/v1/staff/classes', {
+        subject_name: classForm.subject_name,
+        grade_level: classForm.grade_level,
+        schedule_detail: selectedSlots.join(', '),
+        sessions_per_week: sessionsPerWeek,
+        total_sessions: classForm.total_sessions ? Number(classForm.total_sessions) : null,
+        start_date: classForm.start_date || null,
+        teaching_mode: classForm.teaching_mode,
+        expected_hourly_rate: hourlyRate,
+        salary_per_month: salaryPerMonth,
+        tuition_fee: tuitionFee,
+        address_teaching: classForm.teaching_mode === 'offline' ? classForm.address_teaching : classForm.address_teaching || 'Online',
+        requirements: classForm.requirements,
+      });
       toast.success('Đã công khai lớp cho gia sư.');
       setClassForm(initialClassForm); load(); setTab('classes');
     } catch (error) { toast.error(error.response?.data?.message || 'Không tạo được lớp.'); }
@@ -284,6 +379,7 @@ function StaffPortal() {
   const totalCollected = paymentRows.filter((row) => row.status === 'paid').reduce((sum, row) => sum + Number(row.amount || 0), 0);
   const totalSalary = salaryRows.reduce((sum, row) => sum + Number(row.salary || 0), 0);
   const title = { dashboard: 'Tổng quan', requests: 'Yêu cầu tìm gia sư', createClass: 'Tạo lớp học', classes: selectedClass ? `Chi tiết lớp: ${selectedClass.subject_name} ${selectedClass.grade_level || ''}` : 'Quản lý lớp học', payments: 'Theo dõi thanh toán' }[tab];
+  const classFeePreview = calculateClassFees();
 
   return <main className="staff-page">
     <h1>{title}</h1>
@@ -299,11 +395,32 @@ function StaffPortal() {
 
     {tab === 'requests' && <section className="staff-card wide"><h2>Danh sách yêu cầu tìm gia sư</h2><div className="table-shell"><table className="staff-table"><thead><tr><th>Phụ huynh</th><th>Học viên</th><th>Môn</th><th>Lớp</th><th>HT</th><th>Khu vực</th><th>Lịch học</th><th>Lương/giờ</th><th>Lương tháng</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody>{requestRows.length ? requestRows.map((row) => <tr key={row.id}><td><strong>{row.parent}</strong></td><td>{row.student}</td><td>{row.subject}</td><td>{row.grade}</td><td className="muted">{row.teachingMode === 'online' ? 'ON' : 'OFF'}</td><td>{row.area}</td><td>{row.schedule}</td><td>{row.expectedHourlyRate ? money(row.expectedHourlyRate) : '-'}</td><td>{money(row.salary)}</td><td><StatusBadge status={row.status} /></td><td className="staff-actions"><IconButton title="Xem chi tiết" onClick={() => setSelectedRequestDetail(row)}>🔍</IconButton><IconButton title="Tìm gia sư" onClick={() => { setSelectedRequest(row); setFilter({ subject: row.subject, grade: row.grade, schedule: row.schedule, area: row.area }); setHasSearched(true); setTab('findTutors'); }}>⌕</IconButton><IconButton tone="green" title="Công khai lớp" onClick={() => reviewApplication(row.id, 'APPROVED')}>✓</IconButton><IconButton tone="red" title="Từ chối" onClick={() => reviewApplication(row.id, 'REJECTED')}>×</IconButton></td></tr>) : <tr><td colSpan="11" className="muted">Không có yêu cầu chờ xử lý.</td></tr>}</tbody></table></div></section>}
 
-    {tab === 'createClass' && <form className="staff-form-card create-class-card" onSubmit={submitClass}><h2>Tạo lớp học mới</h2><p className="form-subtitle">Nhân viên tạo lớp và công khai cho gia sư đăng ký nhận lớp. Tiền lương bên dưới là lương 1 tháng của gia sư và được đồng bộ sang Admin.</p>
+    {tab === 'createClass' && <form className="staff-form-card create-class-card" onSubmit={submitClass}><h2>Tạo lớp học mới</h2><p className="form-subtitle">Nhân viên tạo lớp và công khai cho gia sư đăng ký nhận lớp. Chọn thời khóa biểu giống form học viên để gia sư được đề xuất theo lịch rảnh.</p>
       <div className="staff-form-grid two"><label>Môn học<select value={classForm.subject_name} onChange={(e) => setClassForm({ ...classForm, subject_name: e.target.value })}><option value="">Chọn môn học</option>{subjects.map(x => <option key={x}>{x}</option>)}</select></label><label>Lớp<select value={classForm.grade_level} onChange={(e) => setClassForm({ ...classForm, grade_level: e.target.value })}><option value="">Chọn lớp</option>{grades.map(g => <option key={g}>{g}</option>)}</select></label></div>
-      <div className="staff-form-grid two"><label>Số buổi/tuần<input type="number" min="1" max="7" value={classForm.sessions_per_week} onChange={(e) => setClassForm({ ...classForm, sessions_per_week: e.target.value })} /></label><label>Tiền lương 1 tháng của gia sư<input type="number" placeholder="VD: 2500000" value={classForm.salary_per_month} onChange={(e) => setClassForm({ ...classForm, salary_per_month: e.target.value, tuition_fee: Math.round(Number(e.target.value || 0) * 1.25) })} /></label></div>
-      <label>Địa điểm học<input placeholder="VD: 25 Nguyễn Văn Cừ, Quận 5, TP.HCM" value={classForm.address_teaching} onChange={(e) => setClassForm({ ...classForm, address_teaching: e.target.value })} /></label>
-      <div className="staff-day-grid"><span>Lịch học</span>{days.map((day) => <label key={day} className="day-check"><input type="checkbox" checked={(classForm.schedule_detail || '').includes(day)} onChange={(e) => { const current = classForm.schedule_detail ? classForm.schedule_detail.split(', ').filter(Boolean) : []; const next = e.target.checked ? [...current, day] : current.filter((x) => x !== day); setClassForm({ ...classForm, schedule_detail: next.join(', ') }); }} />{day}</label>)}</div>
+      <div className="staff-form-grid two"><label>Hình thức học<select value={classForm.teaching_mode} onChange={(e) => setClassForm({ ...classForm, teaching_mode: e.target.value })}><option value="offline">Học offline</option><option value="online">Học online</option></select></label><label>Ngày bắt đầu<input type="date" value={classForm.start_date} onChange={(e) => setClassForm({ ...classForm, start_date: e.target.value })} /></label></div>
+      <div className="staff-form-grid two"><label>Lương theo giờ<input type="number" placeholder="VD: 200000" value={classForm.expected_hourly_rate} onChange={(e) => setClassForm({ ...classForm, expected_hourly_rate: e.target.value })} /></label><label>Tổng số buổi học<input type="number" min="1" placeholder="VD: 24" value={classForm.total_sessions} onChange={(e) => setClassForm({ ...classForm, total_sessions: e.target.value })} /></label></div>
+      <div className="staff-form-grid two"><label>Lương 1 tháng của gia sư<input disabled value={classFeePreview.salaryPerMonth ? money(classFeePreview.salaryPerMonth) : 'Tự tính sau khi chọn lịch'} /></label><label>Học phí 1 tháng của học viên<input disabled value={classFeePreview.tuitionFee ? money(classFeePreview.tuitionFee) : 'Tự tính sau khi chọn lịch'} /></label></div>
+      <label>Địa điểm học<input placeholder={classForm.teaching_mode === 'online' ? 'Online hoặc link học sau' : 'VD: 25 Nguyễn Văn Cừ, Quận 5, TP.HCM'} value={classForm.address_teaching} onChange={(e) => setClassForm({ ...classForm, address_teaching: e.target.value })} /></label>
+      <div className="day-checks-title" style={{ marginTop: '20px' }}>Thời khóa biểu lớp học</div>
+      <p className="muted" style={{ marginBottom: '8px', fontSize: '13px' }}>Bấm hoặc kéo trên các ô để chọn khung giờ học. Các ô liền kề cùng ngày sẽ được gộp thành một ca học.</p>
+      <div className="timetable-grid-wrapper" onMouseUp={handleClassScheduleDragEnd} onMouseLeave={handleClassScheduleDragEnd}>
+        <div className="timetable-grid" style={{ gridTemplateColumns: `80px repeat(${STAFF_TIMETABLE_DAYS.length}, minmax(100px, 1fr))` }}>
+          <div className="timetable-header-cell corner" />
+          {STAFF_TIMETABLE_DAYS.map((d) => <div key={d.code} className="timetable-header-cell day-header">{d.label}</div>)}
+          {STAFF_HOURS.map((hour) => <React.Fragment key={hour}>
+            <div className="timetable-hour-cell">{String(hour).padStart(2, '0')}:00</div>
+            {STAFF_TIMETABLE_DAYS.map((d) => {
+              const key = `${d.code}-${hour}`;
+              const selected = classForm.scheduleCells[key] || false;
+              return <div key={key} className={selected ? 'timetable-cell state-available' : 'timetable-cell state-empty'}
+                onMouseDown={(event) => handleClassScheduleMouseDown(d.code, hour, event)}
+                onMouseEnter={() => handleClassScheduleMouseEnter(d.code, hour)}
+                title={selected ? `Bỏ chọn ${d.label} ${hour}:00-${hour + 1}:00` : `Chọn ${d.label} ${hour}:00-${hour + 1}:00`}
+              />;
+            })}
+          </React.Fragment>)}
+        </div>
+      </div>
       <label>Yêu cầu thêm<textarea className="staff-textarea" placeholder="VD: cần gia sư nữ, có kinh nghiệm luyện thi..." value={classForm.requirements} onChange={(e) => setClassForm({ ...classForm, requirements: e.target.value })} /></label>
       <button className="staff-submit-btn">Công khai lớp cho gia sư</button></form>}
 

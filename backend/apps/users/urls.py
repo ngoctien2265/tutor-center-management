@@ -15,6 +15,7 @@ router.register(r'students', StudentViewSet)
 admin_urlpatterns = [
     path('dashboard', admin_views.dashboard),
     path('finance/summary', admin_views.finance_summary),
+    path('finance/tutors/<int:tutor_id>/pay-salary', admin_views.pay_tutor_salary),
     path('class-requests', admin_views.class_requests),
     path('classes/<int:class_id>/review', admin_views.review_class),
     path('staff', admin_views.staff_members),
@@ -68,6 +69,8 @@ customer_urlpatterns = [
     path('students/<int:student_id>', customer_views.student_detail),
     path('class-requests', customer_views.class_requests),
     path('classes', customer_views.classes),
+    path('classes/available', customer_views.available_classes),
+    path('classes/<int:class_id>/enroll', customer_views.enroll_available_class),
     path('classes/<int:class_id>/confirm-tutor', customer_views.confirm_tutor),
     path('timetable', customer_views.timetable),
     path('payments', customer_views.payments),

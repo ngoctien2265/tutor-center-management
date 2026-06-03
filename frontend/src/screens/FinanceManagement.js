@@ -39,56 +39,37 @@ function FinanceManagement() {
   const [allPayments, setAllPayments] = useState([]);
   const [allSalaries, setAllSalaries] = useState([]);
   const [charts, setCharts] = useState({ labels: [], revenue: [], salary: [], profit: [] });
-  const [enrollments, setEnrollments] = useState([]);
+  const [classPaymentStatus, setClassPaymentStatus] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const [paymentFilter, setPaymentFilter] = useState('all');
   const [salaryFilter, setSalaryFilter] = useState('all');
   const [selectedClass, setSelectedClass] = useState('all');
-  const [selectedSubject, setSelectedSubject] = useState('all');
+  const [salaryPayment, setSalaryPayment] = useState(null);
+  const [confirmingSalary, setConfirmingSalary] = useState(false);
 
-  useEffect(() => {
+  const loadFinance = () => {
     setLoading(true);
     axios.get('/v1/admin/finance/summary')
       .then((res) => {
-        setSummary(res.data.data?.summary || {});
-        setCharts(res.data.data?.charts || { labels: [], revenue: [], salary: [], profit: [] });
-        setAllSalaries(res.data.data?.salaryRows || []);
+        const data = res.data.data || {};
+        setSummary(data.summary || {});
+        setCharts(data.charts || { labels: [], revenue: [], salary: [], profit: [] });
+        setAllPayments(data.paymentRows || data.recentPayments || []);
+        setClassPaymentStatus(data.classPaymentStatus || []);
+        setAllSalaries(data.salaryRows || []);
       })
-      .catch(() => setSummary({}))
+      .catch(() => {
+        setSummary({});
+        setAllPayments([]);
+        setClassPaymentStatus([]);
+        setAllSalaries([]);
+      })
       .finally(() => setLoading(false));
+  };
 
-    axios.get('/api/finance/transactions/')
-      .then((res) => {
-        const transactions = res.data || [];
-        const tuitionTransactions = transactions
-          .filter(tx => tx.type === 'tuition_fee')
-          .map(tx => ({
-            id: tx.id,
-            parent: tx.user_id?.full_name || tx.user_id?.first_name || tx.user_id?.username || 'N/A',
-            className: tx.enrollment_id?.class_id?.subject_name || 'Lớp học',
-            classId: tx.enrollment_id?.class_id?.id,
-            amount: tx.amount,
-            date: tx.updated_at ? new Date(tx.updated_at).toLocaleDateString('vi-VN') : '',
-            status: tx.status,
-          }));
-        setAllPayments(tuitionTransactions);
-      })
-      .catch(() => setAllPayments([]));
-
-    axios.get('/api/finance/enrollments/')
-      .then((res) => {
-        const enrollmentData = res.data || [];
-        setEnrollments(enrollmentData.map(e => ({
-          id: e.id,
-          className: e.class_id?.subject_name || 'N/A',
-          classId: e.class_id?.id,
-          student: e.student_id?.full_name || 'N/A',
-          paymentStatus: e.status,
-          tuitionFee: e.class_id?.tuition_fee || 0,
-        })));
-      })
-      .catch(() => setEnrollments([]));
+  useEffect(() => {
+    loadFinance();
   }, []);
 
   const revenue = summary.netRevenue || 0;
@@ -110,24 +91,21 @@ function FinanceManagement() {
     return matches;
   });
 
-  const uniqueSubjects = [...new Set(allSalaries.map(s => s.tutorName))];
-
-  const classPaymentStatus = enrollments.reduce((acc, e) => {
-    const key = e.className;
-    if (!acc[key]) {
-      acc[key] = { className: key, paid: 0, unpaid: 0, total: 0, totalFee: 0 };
+  const classStatusArray = classPaymentStatus;
+  const hasTutorBankInfo = salaryPayment && (salaryPayment.bankName || salaryPayment.bankBranch || salaryPayment.bankAccountNumber);
+  const confirmTutorSalary = async () => {
+    if (!salaryPayment) return;
+    setConfirmingSalary(true);
+    try {
+      await axios.post(`/v1/admin/finance/tutors/${salaryPayment.tutorId}/pay-salary`);
+      setSalaryPayment(null);
+      loadFinance();
+    } catch (error) {
+      alert(error.response?.data?.message || 'Không xác nhận được thanh toán lương gia sư. Vui lòng restart backend nếu endpoint chưa được nhận.');
+    } finally {
+      setConfirmingSalary(false);
     }
-    acc[key].total += 1;
-    acc[key].totalFee += Number(e.tuitionFee || 0);
-    if (e.paymentStatus === 'paid' || e.paymentStatus === 'active') {
-      acc[key].paid += 1;
-    } else {
-      acc[key].unpaid += 1;
-    }
-    return acc;
-  }, {});
-
-  const classStatusArray = Object.values(classPaymentStatus);
+  };
 
   return (
     <main className="dashboard-container">
@@ -311,25 +289,29 @@ function FinanceManagement() {
                   <tr>
                     <th>Gia sư</th>
                     <th>Số lớp</th>
-                    <th>Buổi dạy</th>
-                    <th>Lương</th>
-                    <th>Trạng thái</th>
+                    <th>Tháng nhận lương</th>
+                    <th>Tổng lương</th>
+                    <th>Trạng thái thanh toán</th>
+                    <th>Thao tác</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredSalaries.length === 0 ? (
-                    <tr><td colSpan="5" style={{ textAlign: 'center' }}>Không có dữ liệu</td></tr>
+                    <tr><td colSpan="6" style={{ textAlign: 'center' }}>Không có dữ liệu</td></tr>
                   ) : (
                     filteredSalaries.map((s) => (
                       <tr key={s.tutorId}>
                         <td><strong>{s.tutorName}</strong></td>
                         <td>{s.classes}</td>
-                        <td>{s.sessionLabel || `${s.sessions || 0} buổi trong tháng`}</td>
+                        <td>{s.salaryMonth || charts.monthLabel || 'Tháng này'}</td>
                         <td><strong>{money(s.salary)}</strong></td>
                         <td>
                           <span className={`status-badge ${statusClass(s.status)}`}>
                             {statusLabel(s.status)}
                           </span>
+                        </td>
+                        <td>
+                          {s.status === 'paid' ? <span className="muted">Đã thanh toán</span> : <button type="button" className="finance-action-btn" onClick={() => setSalaryPayment(s)}>Thanh toán</button>}
                         </td>
                       </tr>
                     ))
@@ -339,6 +321,36 @@ function FinanceManagement() {
             </div>
           </section>
         </>
+      )}
+
+      {salaryPayment && (
+        <div className="finance-modal-backdrop" onClick={() => setSalaryPayment(null)}>
+          <section className="finance-payment-modal" onClick={(e) => e.stopPropagation()}>
+            <button type="button" className="finance-modal-close" onClick={() => setSalaryPayment(null)}>×</button>
+            <h2>Thanh toán lương gia sư</h2>
+            <p className="muted">Chuyển khoản theo thông tin ngân hàng gia sư đã cập nhật, sau đó bấm xác nhận thanh toán.</p>
+            <div className="salary-payment-grid bank-payment-grid">
+              <div className="bank-info-card">
+                <span>Thông tin chuyển khoản</span>
+                <h3>{salaryPayment.bankName || 'Chưa cập nhật ngân hàng'}</h3>
+                <p><strong>Chi nhánh:</strong> {salaryPayment.bankBranch || 'Chưa cập nhật'}</p>
+                <p><strong>Số tài khoản:</strong> {salaryPayment.bankAccountNumber || 'Chưa cập nhật'}</p>
+                <p><strong>Chủ tài khoản:</strong> {salaryPayment.tutorName}</p>
+              </div>
+              <div className="salary-payment-info">
+                <p><strong>Gia sư:</strong> {salaryPayment.tutorName}</p>
+                <p><strong>Số lớp:</strong> {salaryPayment.classes}</p>
+                <p><strong>Buổi được staff duyệt:</strong> {salaryPayment.approvedSessions || 0}/{salaryPayment.totalMonthlySessions || 0}</p>
+                <p><strong>Số tiền cần thanh toán:</strong> {money(salaryPayment.salary)}</p>
+                {!hasTutorBankInfo && <div className="bank-warning">Gia sư chưa cập nhật đầy đủ thông tin ngân hàng. Vui lòng yêu cầu gia sư cập nhật trước khi chuyển khoản.</div>}
+              </div>
+            </div>
+            <div className="finance-modal-actions">
+              <button type="button" className="finance-action-btn primary" disabled={confirmingSalary} onClick={confirmTutorSalary}>{confirmingSalary ? 'Đang xác nhận...' : 'Xác nhận thanh toán'}</button>
+              <button type="button" className="finance-action-btn secondary" onClick={() => setSalaryPayment(null)}>Đóng</button>
+            </div>
+          </section>
+        </div>
       )}
     </main>
   );

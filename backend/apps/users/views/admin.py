@@ -1,5 +1,5 @@
 from collections import defaultdict
-from datetime import timedelta
+from datetime import date, timedelta
 import re
 
 from django.core.exceptions import ValidationError
@@ -18,6 +18,7 @@ from apps.feedback.models import Review
 from apps.finance.models import Enrollment, Transaction
 from apps.users.models import Student, Tutor, User, TeachingLog
 from apps.users.serializers import TutorSerializer, UserSerializer
+from apps.users.serializers.tutor import parse_schedule_text
 
 
 ACTIVE_CLASS_STATUSES = ['assigned', 'waiting_tutor', 'teaching', 'paused']
@@ -241,6 +242,36 @@ def current_month_info():
     return today.year, today.month, f'Tháng {today.month}'
 
 
+WEEKDAY_INDEX = {
+    'MONDAY': 0,
+    'TUESDAY': 1,
+    'WEDNESDAY': 2,
+    'THURSDAY': 3,
+    'FRIDAY': 4,
+    'SATURDAY': 5,
+    'SUNDAY': 6,
+}
+
+
+def expected_sessions_in_month(class_obj, year, month):
+    slots = parse_schedule_text(class_obj.schedule_detail)
+    weekdays = {WEEKDAY_INDEX[slot.get('dayOfWeek')] for slot in slots if slot.get('dayOfWeek') in WEEKDAY_INDEX}
+    if not weekdays:
+        return 0
+    first_day = date(year, month, 1)
+    next_month = date(year + (1 if month == 12 else 0), 1 if month == 12 else month + 1, 1)
+    start_day = max(first_day, class_obj.start_date) if class_obj.start_date else first_day
+    count = 0
+    current = start_day
+    while current < next_month:
+        if current.weekday() in weekdays:
+            count += 1
+        current += timedelta(days=1)
+    if class_obj.total_sessions:
+        return min(count, class_obj.total_sessions)
+    return count
+
+
 def current_month_week_labels():
     return ['Tuần 1', 'Tuần 2', 'Tuần 3', 'Tuần 4']
 
@@ -412,30 +443,66 @@ def finance_summary(request):
     refunds = success_transactions.filter(type='refund').aggregate(total=Sum('amount'))['total'] or 0
     tutor_salary_total = Class.objects.filter(tutor__isnull=False, status__in=ACTIVE_CLASS_STATUSES + ['completed']).aggregate(total=Sum('salary_per_month'))['total'] or 0
 
-    recent_payments = []
-    for tx in Transaction.objects.select_related('user_id', 'user_id__student_profile', 'enrollment_id', 'enrollment_id__class_id').filter(type='tuition_fee').order_by('-created_at')[:20]:
+    payment_rows = []
+    for tx in Transaction.objects.select_related('user_id', 'user_id__student_profile', 'enrollment_id', 'enrollment_id__class_id').filter(type='tuition_fee').order_by('-created_at'):
         enrollment = tx.enrollment_id
-        recent_payments.append({
+        payment_rows.append({
             'id': tx.id,
             'parent': display_user_name(tx.user_id),
             'className': enrollment.class_id.subject_name if enrollment else 'Lớp học',
+            'classId': enrollment.class_id_id if enrollment else None,
             'amount': money_int(tx.amount),
             'date': tx.updated_at.date().isoformat(),
             'status': 'paid' if tx.status == 'success' else 'unpaid',
         })
+    recent_payments = payment_rows[:20]
+
+    class_payment_status = []
+    class_stats = {}
+    for enrollment in Enrollment.objects.select_related('class_id'):
+        class_obj = enrollment.class_id
+        key = class_obj.id if class_obj else enrollment.id
+        if key not in class_stats:
+            class_stats[key] = {
+                'classId': class_obj.id if class_obj else None,
+                'className': class_obj.subject_name if class_obj else 'Lớp học',
+                'paid': 0,
+                'unpaid': 0,
+                'total': 0,
+                'totalFee': 0,
+            }
+        class_stats[key]['total'] += 1
+        class_stats[key]['totalFee'] += money_int(class_obj.tuition_fee if class_obj else 0)
+        if enrollment.status in ['paid', 'active', 'completed']:
+            class_stats[key]['paid'] += 1
+        else:
+            class_stats[key]['unpaid'] += 1
+    class_payment_status = list(class_stats.values())
 
     salary_rows = []
     for tutor in Tutor.objects.select_related('user').filter(classes_teaching__isnull=False).distinct().order_by('full_name'):
         classes_qs = Class.objects.filter(tutor=tutor, status__in=ACTIVE_CLASS_STATUSES + ['completed'])
-        sessions = TeachingLog.objects.filter(tutor=tutor, session_date__year=today.year, session_date__month=today.month).count()
+        monthly_logs = TeachingLog.objects.filter(tutor=tutor, session_date__year=today.year, session_date__month=today.month)
+        sessions = monthly_logs.count()
+        approved_sessions = monthly_logs.filter(note__icontains='Staff xác nhận').count()
+        total_monthly_sessions = sum(expected_sessions_in_month(class_obj, today.year, today.month) for class_obj in classes_qs)
+        payable = total_monthly_sessions > 0 and approved_sessions >= total_monthly_sessions
         salary = classes_qs.aggregate(total=Sum('salary_per_month'))['total'] or 0
         salary_paid = Transaction.objects.filter(user_id=tutor.user, type='tutor_salary', status='success').exists()
         salary_rows.append({
             'tutorId': tutor.id,
+            'tutorUserId': tutor.user_id,
             'tutorName': tutor.full_name,
+            'salaryMonth': f'Tháng {today.month}/{today.year}',
+            'bankName': tutor.bank_name or '',
+            'bankBranch': tutor.bank_branch or '',
+            'bankAccountNumber': tutor.bank_account_number or '',
             'classes': classes_qs.count(),
             'sessions': sessions,
-            'sessionLabel': f'{sessions} buổi trong tháng {today.month}',
+            'approvedSessions': approved_sessions,
+            'totalMonthlySessions': total_monthly_sessions,
+            'canPaySalary': payable,
+            'sessionLabel': f'{approved_sessions}/{total_monthly_sessions} buổi đã duyệt trong tháng {today.month}',
             'salary': money_int(salary),
             'status': 'paid' if salary_paid else 'unpaid',
         })
@@ -460,6 +527,8 @@ def finance_summary(request):
             'activeEnrollments': Enrollment.objects.filter(status__in=['active', 'paid']).count(),
         },
         'recentPayments': recent_payments,
+        'paymentRows': payment_rows,
+        'classPaymentStatus': class_payment_status,
         'salaryRows': salary_rows,
         'charts': {
             'labels': current_month_week_labels(),
@@ -477,6 +546,33 @@ def finance_summary(request):
             for key, _ in Enrollment.STATUS_CHOICES
         },
     })
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def pay_tutor_salary(request, tutor_id):
+    guard = require_admin(request)
+    if guard:
+        return guard
+    tutor = Tutor.objects.select_related('user').filter(pk=tutor_id).first()
+    if not tutor or not tutor.user:
+        return fail('Không tìm thấy gia sư.', status.HTTP_404_NOT_FOUND)
+    classes_qs = Class.objects.filter(tutor=tutor, status__in=ACTIVE_CLASS_STATUSES + ['completed'])
+    salary = classes_qs.aggregate(total=Sum('salary_per_month'))['total'] or 0
+    if salary <= 0:
+        return fail('Gia sư này chưa có lương cần thanh toán.')
+    tx, _ = Transaction.objects.update_or_create(
+        user_id=tutor.user,
+        type='tutor_salary',
+        status='success',
+        defaults={'amount': salary},
+    )
+    return ok({
+        'transactionId': tx.id,
+        'tutorId': tutor.id,
+        'amount': money_int(tx.amount),
+        'status': 'paid',
+    }, 'Đã xác nhận thanh toán lương gia sư.')
 
 
 @api_view(['GET'])

@@ -7,7 +7,7 @@ import { toast } from 'react-toastify';
 import { buildClassSessions, buildWeekDays, dayLabelToCode, formatWeekRange, mapCustomerClass, money, parseScheduleSlots, startOfWeek, timeFromMinutes } from './customerClassUtils';
 import './TutorPortal.css';
 
-const tabKeys = ['dashboard', 'request', 'classes', 'timetable'];
+const tabKeys = ['dashboard', 'request', 'available', 'classes', 'timetable'];
 const desiredDays = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
 const grades = Array.from({ length: 12 }, (_, i) => `Lớp ${i + 1}`);
 const emptyStudent = { full_name: '', grade_level: '', school_name: '', birthday: '', gender: '', note: '' };
@@ -36,6 +36,7 @@ function ParentPortal() {
   const tab = tabKeys.includes(urlTab) ? urlTab : 'dashboard';
   const [profile, setProfile] = useState({ parent: {}, students: [] });
   const [classes, setClasses] = useState([]);
+  const [availableClasses, setAvailableClasses] = useState([]);
   const [payments, setPayments] = useState([]);
   const [requestForm, setRequestForm] = useState({
     subject: '',
@@ -55,16 +56,18 @@ function ParentPortal() {
   const [timetableWeekStart, setTimetableWeekStart] = useState(() => startOfWeek(new Date()));
 
   const setTab = (nextTab) => router.push(nextTab === 'dashboard' ? '/customer' : `/customer?tab=${nextTab}`);
-  const pageTitle = { dashboard: 'Tổng quan', request: 'Đăng ký tìm gia sư', classes: 'Lớp đang học', timetable: 'Thời khóa biểu' }[tab];
+  const pageTitle = { dashboard: 'Tổng quan', request: 'Đăng ký tìm gia sư', available: 'Lớp có sẵn', classes: 'Lớp đang học', timetable: 'Thời khóa biểu' }[tab];
 
   const loadAll = async () => {
-    const [p, c, pay] = await Promise.allSettled([
+    const [p, c, available, pay] = await Promise.allSettled([
       axios.get('/v1/customer/profile'),
       axios.get('/v1/customer/classes'),
+      axios.get('/v1/customer/classes/available'),
       axios.get('/v1/customer/payments'),
     ]);
     if (p.status === 'fulfilled') setProfile(p.value.data.data || { parent: {}, students: [] });
     if (c.status === 'fulfilled') setClasses(c.value.data.data || []);
+    if (available.status === 'fulfilled') setAvailableClasses(available.value.data.data || []);
     if (pay.status === 'fulfilled') setPayments(pay.value.data.data || []);
   };
   useEffect(() => { loadAll(); }, []);
@@ -247,6 +250,16 @@ function ParentPortal() {
       setTab('classes');
     } catch (error) { toast.error(error.response?.data?.message || 'Không xác nhận được gia sư.'); }
   };
+
+  const enrollAvailableClass = async (item) => {
+    if (!window.confirm(`Đăng ký học lớp ${item.subject} ${item.gradeLevel || ''}?`)) return;
+    try {
+      await axios.post(`/v1/customer/classes/${item.classId}/enroll`);
+      toast.success('Đã đăng ký lớp học. Vui lòng thanh toán học phí để bắt đầu học.');
+      await loadAll();
+      setTab('classes');
+    } catch (error) { toast.error(error.response?.data?.message || 'Không đăng ký được lớp học.'); }
+  };
   return <main className="tutor-figma-page parent-figma-page"><h1>{pageTitle}</h1>
     {tab === 'dashboard' && <><section className="tutor-stat-row parent-stat-row"><article className="tutor-stat"><span className="tutor-icon blue">♙</span><p>Học viên</p><h3>{profile.students?.length || 0}</h3></article><article className="tutor-stat"><span className="tutor-icon green">▰</span><p>Lớp đang học</p><h3>{learningClasses.filter(c => c.status === 'Đang học').length}</h3></article><article className="tutor-stat"><span className="tutor-icon orange">✓</span><p>Cần xác nhận gia sư</p><h3>{pendingConfirmations.length}</h3></article><article className="tutor-stat"><span className="tutor-icon purple">$</span><p>Học phí chưa thanh toán</p><h3>{money(unpaidTotal)}</h3></article></section>{pendingConfirmations.length ? <section className="tutor-card parent-confirm-section"><div className="section-head"><div><h2>Cần phụ huynh xác nhận gia sư</h2><p className="muted">Nhân viên đã chấp thuận và gửi gia sư phù hợp. Vui lòng xác nhận để lớp chuyển sang Đang học.</p></div><button className="outline-btn compact" onClick={() => setTab('classes')}>Xem tất cả</button></div><div className="teaching-grid">{pendingConfirmations.slice(0, 2).map((item) => <ParentClassCard key={item.id} item={item} onConfirm={confirmTutor} onView={() => router.push(`/customer/classes/${item.id}`)} />)}</div></section> : null}<section className="tutor-dashboard-grid"><div className="tutor-card"><h2>Lịch học tuần này</h2><div className="tutor-list">{weekSchedule.length ? weekSchedule.map((item) => <div className="schedule-item" key={item.id}><div><strong>{item.title}</strong><span>{item.subtitle}</span><span>Địa chỉ: {item.location}</span></div><div className="schedule-time"><b>{item.day}</b><span>{item.time}</span></div></div>) : <p className="muted">Chưa có lịch học.</p>}</div></div><div className="tutor-card"><h2>Thông báo</h2><div className="notice-list"><div className="parent-notice blue"><strong>Nhắc nhở thanh toán</strong><span>Còn {money(unpaidTotal)} học phí cần thanh toán</span></div>{notifications.length ? notifications.slice(0, 3).map((n) => <div className="parent-notice green" key={n.requestId}><strong>{statusVi(n.requestType)} - {n.className}</strong><span>{n.sessionDate}: {n.reason}</span></div>) : <div className="parent-notice green"><strong>Trạng thái lớp</strong><span>{learningClasses.filter((c) => c.status.includes('Chờ')).length} yêu cầu đang chờ trung tâm xử lý</span></div>}</div></div></section></>}
 
@@ -305,6 +318,8 @@ function ParentPortal() {
       <button className="tutor-submit full-width">Gửi yêu cầu tìm gia sư</button>
     </form>}
 
+    {tab === 'available' && <section className="tutor-card"><div className="section-head"><div><h2>Lớp có sẵn</h2><p className="muted">Các lớp đang công khai và không trùng với thời khóa biểu hiện tại của học viên.</p></div></div><div className="teaching-grid">{availableClasses.length ? availableClasses.map((item) => <AvailableClassCard key={item.classId} item={item} onEnroll={enrollAvailableClass} />) : <p className="muted">Chưa có lớp phù hợp với lịch học hiện tại.</p>}</div></section>}
+
     {tab === 'classes' && <section className="tutor-card"><h2>Lớp đang học</h2>{pendingConfirmations.length ? <div className="parent-notice yellow confirmation-reminder"><strong>Có {pendingConfirmations.length} gia sư đang chờ bạn xác nhận</strong><span>Vui lòng xác nhận để lớp chuyển sang Đang học.</span><button className="outline-btn compact" onClick={() => setTab('classes')}>Xác nhận ngay</button></div> : null}<div className="teaching-grid">{learningClasses.length ? learningClasses.map((item) => <ParentClassCard key={item.id} item={item} onConfirm={confirmTutor} onView={() => router.push(`/customer/classes/${item.id}`)} />) : <p className="muted">Chưa có lớp học.</p>}</div></section>}
 
     {tab === 'timetable' && <StudentTimetable weekStart={timetableWeekStart} setWeekStart={setTimetableWeekStart} weekDays={timetableWeekDays} sessions={timetableSessions} onViewClass={(id) => router.push(`/customer/classes/${id}`)} />}
@@ -318,6 +333,7 @@ function TextArea({ label, value, onChange, placeholder, disabled = false }) { r
 function FieldSelect({ label, value, onChange, options, placeholder, disabled = false }) { return <label className="parent-field"><span>{label}</span><select value={value || ''} disabled={disabled} onChange={(e) => onChange(e.target.value)}><option value="">{placeholder}</option>{options.map((item) => typeof item === 'string' ? <option value={item} key={item}>{item}</option> : <option value={item.value} key={item.value}>{item.label}</option>)}</select></label>; }
 function StudentModal({ mode, student, setStudent, onClose, onSave }) { const readonly = mode === 'view'; const title = mode === 'add' ? 'Thêm học viên' : mode === 'edit' ? 'Cập nhật học viên' : 'Thông tin học viên'; return <div className="modal-backdrop" onClick={onClose}><section className="modal-card large student-modal-card" onClick={(e) => e.stopPropagation()}><button className="modal-close" onClick={onClose}>×</button><h2>{title}</h2><p className="form-subtitle">Thông tin này được dùng để đăng ký tìm gia sư và theo dõi lớp học của con.</p><div className="profile-grid two"><TextField label="Họ tên học viên" value={student.full_name} disabled={readonly} onChange={(v) => setStudent({ ...student, full_name: v })} placeholder="VD: Nguyễn Văn An" /><FieldSelect label="Lớp" value={student.grade_level} disabled={readonly} onChange={(v) => setStudent({ ...student, grade_level: v })} options={grades} placeholder="Chọn lớp" /><TextField label="Trường học" value={student.school_name} disabled={readonly} onChange={(v) => setStudent({ ...student, school_name: v })} placeholder="VD: THPT Nguyễn Trãi" /><FieldSelect label="Giới tính" value={student.gender} disabled={readonly} onChange={(v) => setStudent({ ...student, gender: v })} options={[{ label: 'Nam', value: 'male' }, { label: 'Nữ', value: 'female' }, { label: 'Khác', value: 'other' }]} placeholder="Chọn giới tính" /><TextField label="Ngày sinh" type="date" value={student.birthday} disabled={readonly} onChange={(v) => setStudent({ ...student, birthday: v })} /><TextArea label="Ghi chú học tập" value={student.note} disabled={readonly} onChange={(v) => setStudent({ ...student, note: v })} placeholder="VD: mất gốc Toán, cần học buổi tối..." /></div>{!readonly && <button className="tutor-submit full-width" onClick={onSave}>{mode === 'add' ? 'Thêm học viên' : 'Lưu thay đổi'}</button>}</section></div>; }
 function ParentClassCard({ item, onConfirm, onView }) { const waitingParent = item.rawStatus === 'WAITING_PARENT' || item.status === 'Chờ phụ huynh xác nhận'; return <article className={`teaching-card parent-class-card ${waitingParent ? 'need-confirm' : ''}`}><div className="class-top"><h3>{item.title}</h3><StatusBadge tone={waitingParent ? 'yellow' : 'green'}>{item.status}</StatusBadge></div>{waitingParent ? <div className="confirm-callout"><strong>Nhân viên đã gửi gia sư phù hợp</strong><span>Vui lòng xác nhận để lớp chuyển sang Đang học.</span></div> : null}<p><b>Học viên:</b> {item.student} - {item.grade}</p><p><b>Gia sư:</b> {item.tutor}</p><p><b>Lịch:</b> {item.schedule}</p><p><b>Địa chỉ:</b> {item.location}</p><p className="green-text"><b>Học phí: {money(item.tuition)}/tháng</b></p>{item.notifications?.length ? <p className="muted">Có {item.notifications.length} thông báo nghỉ/dạy bù</p> : null}{waitingParent ? <div className="suggest-actions"><button className="tutor-primary" onClick={() => onConfirm(item, 'APPROVED')}>Đồng ý gia sư</button><button className="tutor-muted-btn" onClick={() => onConfirm(item, 'REJECTED')}>Từ chối</button></div> : <button className="outline-btn" onClick={onView}>Xem chi tiết</button>}</article>; }
+function AvailableClassCard({ item, onEnroll }) { const schedule = item.scheduleDetail || (item.schedule || []).map((slot) => `${slot.dayLabel || slot.dayOfWeek || ''} ${slot.startTime || ''}-${slot.endTime || ''}`.trim()).filter(Boolean).join(', '); return <article className="teaching-card parent-class-card"><div className="class-top"><h3>{item.subject} - {item.gradeLevel}</h3><StatusBadge tone="blue">Có sẵn</StatusBadge></div><p><b>Lịch:</b> {schedule || '-'}</p><p><b>Hình thức:</b> {item.teachingMode === 'online' ? 'Online' : 'Offline'}</p><p><b>Địa điểm:</b> {item.location || '-'}</p><p><b>Ngày bắt đầu:</b> {item.startDate || 'Chưa cập nhật'}</p><p><b>Số buổi/tuần:</b> {item.sessionsPerWeek || '-'}</p><p><b>Tổng số buổi:</b> {item.totalSessions || '-'}</p><p>{item.requirements || 'Không có yêu cầu thêm.'}</p><p className="green-text"><b>Học phí: {money(item.salaryPerMonth)}/tháng</b></p><button className="tutor-primary" onClick={() => onEnroll(item)}>Đăng ký học</button></article>; }
 function StudentTimetable({ weekStart, setWeekStart, weekDays, sessions, onViewClass }) {
   const hours = Array.from({ length: 16 }, (_, i) => i + 7);
   const weekSessionCount = sessions.filter((session) => weekDays.some((day) => day.dateKey === session.dateKey)).length;
