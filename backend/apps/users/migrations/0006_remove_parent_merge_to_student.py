@@ -46,9 +46,19 @@ class Migration(migrations.Migration):
         ),
         # Note: Enrollment.parent_id is removed by finance.0003_remove_enrollment_parent_id
         # Update indexes
-        migrations.RemoveIndex(
-            model_name='student',
-            name='users_stud_parent_grade_index',
+        migrations.SeparateDatabaseAndState(
+            database_operations=[
+                migrations.RunSQL(
+                    sql='DROP INDEX IF EXISTS users_stud_parent_grade_index',
+                    reverse_sql=migrations.RunSQL.noop,
+                ),
+            ],
+            state_operations=[
+                migrations.RemoveIndex(
+                    model_name='student',
+                    name='users_stud_parent_grade_index',
+                ),
+            ],
         ),
         migrations.AddIndex(
             model_name='student',

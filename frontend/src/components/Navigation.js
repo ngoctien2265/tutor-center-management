@@ -73,15 +73,14 @@ function Navigation({ onLogout }) {
     ['▦', '/staff', 'Tổng quan'],
     ['▤', '/staff?tab=requests', 'Yêu cầu tìm gia sư'],
     ['▰', '/staff?tab=createClass', 'Tạo lớp học'],
-    ['▱', '/staff?tab=findTutors', 'Tìm gia sư'],
     ['▰', '/staff?tab=classes', 'Quản lý lớp học'],
-    ['▣', '/staff?tab=sessions', 'Quản lý buổi học'],
     ['$', '/staff?tab=payments', 'Theo dõi thanh toán'],
   ];
 
   const tutorLinks = [
     ['▦', '/tutor', 'Tổng quan'],
     ['♙', '/tutor?tab=profile', 'Hồ sơ cá nhân'],
+    ['▰', '/tutor?tab=proposed', 'Lớp đề xuất'],
     ['▰', '/tutor?tab=classes', 'Lớp đang dạy'],
     ['⌚', '/tutor?tab=timetable', 'Lịch rảnh & dạy'],
     ['☆', '/tutor?tab=reviews', 'Đánh giá'],
@@ -90,6 +89,7 @@ function Navigation({ onLogout }) {
     ['▦', '/customer', 'Tổng quan'],
     ['⌕', '/customer?tab=request', 'Đăng ký tìm gia sư'],
     ['▰', '/customer?tab=classes', 'Lớp đang học'],
+    ['⌚', '/customer?tab=timetable', 'Thời khóa biểu'],
   ];
 
   const links = role === 'tutor'

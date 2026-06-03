@@ -66,5 +66,8 @@ class ClassCreateUpdateSerializer(serializers.ModelSerializer):
         model = Class
         fields = [
             'subject_name', 'grade_level', 'schedule_detail', 'sessions_per_week',
-            'salary_per_month', 'tuition_fee', 'address_teaching', 'requirements', 'admin_note', 'status', 'tutor'
+            'salary_per_month', 'tuition_fee', 'address_teaching', 'requirements', 'admin_note',
+            'teaching_mode', 'expected_hourly_rate', 'status', 'tutor',
+            'start_date'
+
         ]

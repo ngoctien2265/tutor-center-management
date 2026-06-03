@@ -23,4 +23,4 @@ EXPOSE 8000
 RUN mkdir -p staticfiles media
 
 # Run migrations and start server
-CMD ["sh", "-c", "python manage.py makemigrations && python manage.py migrate && python manage.py seed_db && python manage.py collectstatic --noinput && gunicorn wsgi:application --bind 0.0.0.0:8000"]
+CMD ["sh", "-c", "python manage.py makemigrations && python manage.py migrate && python manage.py seed_db --clear && python manage.py collectstatic --noinput && gunicorn wsgi:application --bind 0.0.0.0:8000"]

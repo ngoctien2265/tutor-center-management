@@ -123,17 +123,32 @@ DAY_MAP = {
 
 def parse_schedule_text(text):
     import re
-    raw = (text or '').lower()
-    day_code, day_label = 'MONDAY', 'Thứ 2'
-    for key, value in DAY_MAP.items():
-        if key in raw:
-            day_code, day_label = value
-            break
-    times = re.findall(r'(\d{1,2}:\d{2})', text or '')
-    start, end = ('18:00', '19:30')
-    if len(times) >= 2:
-        start, end = times[0], times[1]
-    return [{'dayOfWeek': day_code, 'dayLabel': day_label, 'startTime': start, 'endTime': end, 'note': text or ''}]
+    if not text:
+        return []
+    results = []
+    chunks = text.split(',')
+    last_day_code, last_day_label = 'MONDAY', 'Thứ 2'
+    for chunk in chunks:
+        raw = chunk.lower()
+        day_code, day_label = None, None
+        for key, value in DAY_MAP.items():
+            if key in raw:
+                day_code, day_label = value
+                break
+        if day_code:
+            last_day_code, last_day_label = day_code, day_label
+        else:
+            day_code, day_label = last_day_code, last_day_label
+        times = re.findall(r'(\d{1,2}:\d{2})', chunk)
+        if len(times) >= 2:
+            results.append({
+                'dayOfWeek': day_code,
+                'dayLabel': day_label,
+                'startTime': times[0],
+                'endTime': times[1],
+                'note': chunk.strip()
+            })
+    return results
 
 class OpenClassSerializer(serializers.ModelSerializer):
     classId = serializers.CharField(source='id')
@@ -141,6 +156,7 @@ class OpenClassSerializer(serializers.ModelSerializer):
     level = serializers.SerializerMethodField()
     location = serializers.CharField(source='address_teaching')
     teachingMode = serializers.SerializerMethodField()
+    expectedHourlyRate = serializers.DecimalField(source='expected_hourly_rate', max_digits=10, decimal_places=2, read_only=True)
     salaryPerSession = serializers.SerializerMethodField()
     feeAmount = serializers.SerializerMethodField()
     schedule = serializers.SerializerMethodField()
@@ -148,11 +164,16 @@ class OpenClassSerializer(serializers.ModelSerializer):
     applicationDeadline = serializers.SerializerMethodField()
     status = serializers.SerializerMethodField()
     sessionsPerWeek = serializers.IntegerField(source='sessions_per_week', read_only=True)
+    totalSessions = serializers.IntegerField(source='total_sessions', read_only=True)
+    startDate = serializers.DateField(source='start_date', read_only=True)
     durationLabel = serializers.SerializerMethodField()
 
     class Meta:
         model = Class
-        fields = ['classId','subject','level','location','teachingMode','salaryPerSession','feeAmount','schedule','requirements','description','applicationDeadline','status','sessionsPerWeek','durationLabel']
+        fields = ['classId','subject','level','location','teachingMode','expectedHourlyRate','salaryPerSession','feeAmount','schedule','requirements','description','applicationDeadline','status','sessionsPerWeek','totalSessions','startDate','durationLabel']
+
+    def get_teachingMode(self, obj):
+        return (obj.teaching_mode or 'offline').upper()
 
     def get_level(self, obj):
         if getattr(obj, 'grade_level', None):
@@ -162,9 +183,6 @@ class OpenClassSerializer(serializers.ModelSerializer):
             if f'lớp {grade}' in text or f'lop {grade}' in text:
                 return f'Lớp {grade}'
         return 'Phổ thông'
-    def get_teachingMode(self, obj):
-        text = f'{obj.address_teaching or ""} {obj.requirements or ""}'.lower()
-        return 'ONLINE' if 'online' in text or 'trực tuyến' in text else 'OFFLINE'
     def get_salaryPerSession(self, obj):
         try:
             return int(obj.salary_per_month) // max((obj.sessions_per_week or 1) * 4, 1)
@@ -241,7 +259,7 @@ class ActiveClassSerializer(OpenClassSerializer):
     parentPhone = serializers.SerializerMethodField()
     nextSession = serializers.SerializerMethodField()
     class Meta(OpenClassSerializer.Meta):
-        fields = ['classId','subject','level','studentName','studentPhone','parentName','parentPhone','location','teachingMode','salaryPerSession','schedule','requirements','status','nextSession','sessionsPerWeek','durationLabel']
+        fields = ['classId','subject','level','studentName','studentPhone','parentName','parentPhone','location','teachingMode','salaryPerSession','schedule','requirements','status','nextSession','sessionsPerWeek','totalSessions','startDate','durationLabel']
     def _enrollment(self, obj):
         return obj.enrollments.filter(status='active').first() or obj.enrollments.first()
     def get_studentName(self, obj):

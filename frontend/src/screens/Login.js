@@ -125,8 +125,6 @@ function Login({ onLoginSuccess }) {
           <br />
           <strong>Gia sư:</strong> tutor_1 / tutor123
           <br />
-          <strong>Nhân viên:</strong> staff / staff123
-          <br />
           <strong>Học viên:</strong> student1 / student123
         </p>
       </div>

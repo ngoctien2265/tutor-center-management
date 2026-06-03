@@ -8,6 +8,7 @@ import './ListPage.css';
 
 const emptyForm = {
   id: null,
+  username: '',
   fullName: '',
   email: '',
   phone: '',
@@ -35,6 +36,7 @@ function approvalClass(status) {
 
 function validateForm(form, editing) {
   const errors = [];
+  if (!editing && !form.username.trim()) errors.push('Vui lòng nhập tên đăng nhập.');
   if (!form.fullName.trim()) errors.push('Vui lòng nhập họ tên.');
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errors.push('Email không đúng định dạng.');
   if (!/^(0|\+84)[0-9]{9,10}$/.test(form.phone)) errors.push('Số điện thoại phải bắt đầu bằng 0 hoặc +84 và có 10-11 số.');
@@ -55,6 +57,7 @@ function AccountModal({ mode, form, setForm, onClose, onSubmit }) {
         </div>
         <div className="form-grid two">
           {editing && <label>ID<input value={form.id || ''} disabled /></label>}
+          <label>Tên đăng nhập<input value={form.username} disabled={editing} onChange={(e) => setForm({ ...form, username: e.target.value })} placeholder="VD: nguyenvannam" /></label>
           <label>Họ tên<input value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} placeholder="VD: Nguyễn Văn Nam" /></label>
           <label>Email<input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="VD: nam@gmail.com" /></label>
           <label>Số điện thoại<input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="VD: 0901234567" /></label>
@@ -108,6 +111,7 @@ function Users() {
   const openEdit = (user) => {
     setForm({
       id: user.id,
+      username: user.username || '',
       fullName: user.display_name || user.full_name || user.username || '',
       email: user.email || '',
       phone: user.phone || '',
@@ -219,11 +223,12 @@ function Users() {
         </div>
 
         <table className="admin-table" style={{ marginTop: 20 }}>
-          <thead><tr><th>Họ tên</th><th>Email</th><th>SĐT</th><th>Vai trò</th><th>Trạng thái</th><th>Ngày tạo</th><th>Thao tác</th></tr></thead>
+          <thead><tr><th>Họ tên</th><th>Tên đăng nhập</th><th>Email</th><th>SĐT</th><th>Vai trò</th><th>Trạng thái</th><th>Ngày tạo</th><th>Thao tác</th></tr></thead>
           <tbody>
             {filtered.map((user) => (
               <tr key={user.id}>
                 <td><strong>{user.display_name || user.full_name || user.username || '-'}</strong></td>
+                <td>{user.username || '-'}</td>
                 <td>{user.email || '-'}</td>
                 <td>{user.phone || '-'}</td>
                 <td><span className={`role-badge ${roleClass(user.role)}`}>{roleText(user.role)}</span></td>

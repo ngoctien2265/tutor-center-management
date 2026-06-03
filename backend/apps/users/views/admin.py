@@ -784,7 +784,9 @@ def create_user(request):
     if role not in ['staff', 'tutor', 'student']:
         return fail('Chỉ được thêm tài khoản Nhân viên, Gia sư hoặc Học viên.')
 
-    username = request.data.get('username') or make_username(data['email'], data['full_name'])
+    username = (request.data.get('username') or make_username(data['email'], data['full_name'])).strip()
+    if User.objects.filter(username=username).exists():
+        return fail({'username': 'Tên đăng nhập đã tồn tại.'})
     user = User.objects.create_user(
         username=username,
         email=data['email'],

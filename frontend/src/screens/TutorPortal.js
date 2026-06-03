@@ -4,9 +4,10 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import { buildClassSessions, buildWeekDays, formatDate, formatWeekRange, parseScheduleSlots, startOfWeek, timeFromMinutes } from './customerClassUtils';
 import './TutorPortal.css';
 
-const tabKeys = ['dashboard', 'profile', 'classes', 'reviews', 'timetable'];
+const tabKeys = ['dashboard', 'profile', 'proposed', 'classes', 'reviews', 'timetable'];
 const money = (value) => Number(value || 0).toLocaleString('vi-VN') + 'đ';
 function StatusBadge({ children, tone = 'green' }) { return <span className={`tutor-badge ${tone}`}>{children}</span>; }
 function scheduleLabel(slots = []) { return slots.map((s) => `${s.dayLabel || s.dayOfWeek} ${s.startTime || ''}-${s.endTime || ''}`.trim()).join(', ') || '-'; }
@@ -51,9 +52,10 @@ function TutorPortal() {
   const [timetableLoading, setTimetableLoading] = useState(false);
   const [dragSelection, setDragSelection] = useState(null); // { day, startHour, endHour } trong khi đang kéo chuột
   const [isDragging, setIsDragging] = useState(false);
+  const [timetableWeekStart, setTimetableWeekStart] = useState(() => startOfWeek(new Date()));
 
   const setTab = (nextTab) => router.push(nextTab === 'dashboard' ? '/tutor' : `/tutor?tab=${nextTab}`);
-  const pageTitle = { dashboard: 'Tổng quan', profile: 'Hồ sơ cá nhân', classes: 'Lớp đang dạy', reviews: 'Đánh giá', timetable: 'Lịch rảnh & Lịch dạy' }[tab];
+  const pageTitle = { dashboard: 'Tổng quan', profile: 'Hồ sơ cá nhân', proposed: 'Lớp đề xuất', classes: 'Lớp đang dạy', reviews: 'Đánh giá', timetable: 'Lịch rảnh & Lịch dạy' }[tab];
 
   const loadAll = async () => {
     try {
@@ -100,7 +102,7 @@ function TutorPortal() {
     catch (error) { toast.error(error.response?.data?.message || 'Không cập nhật được hồ sơ.'); }
   };
   const acceptClass = async (item) => {
-    try { await axios.post(`/v1/tutor/classes/${item.classId}/applications`, { coverNote: 'Gia sư đồng ý nhận lớp.', expectedSalary: item.salaryPerSession }); toast.success('Đã gửi yêu cầu nhận lớp cho nhân viên duyệt.'); loadAll(); }
+    try { await axios.post(`/v1/tutor/classes/${item.classId}/applications`, { coverNote: 'Gia sư đồng ý nhận lớp.', expectedSalary: item.salaryPerSession }); toast.success('Đã nhận lớp thành công.'); loadAll(); }
     catch (error) { toast.error(error.response?.data?.message || 'Không thể nhận lớp này.'); }
   };
   const startAction = (cls, type) => setActionForm({ classId: cls.classId, className: cls.subject, type, date: today(), note: '' });
@@ -139,17 +141,31 @@ function TutorPortal() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
 
-  const cellState = (day, hour) => {
-    const classCells = timetableData.classHourMap?.[day] || [];
-    const classMatch = classCells.find((c) => c.slotHour === hour);
-    if (classMatch) return { type: 'class', class: classMatch };
-    const avail = (timetableData.availabilityHourMap?.[day] || []).includes(hour);
-    return { type: avail ? 'available' : 'empty' };
+  const timetableWeekDays = useMemo(() => buildWeekDays(timetableWeekStart), [timetableWeekStart]);
+  const teachingSessions = useMemo(() => activeClasses.flatMap((cls) => {
+    if (['COMPLETED', 'CANCELLED'].includes(cls.status)) return [];
+    const slots = parseScheduleSlots({ schedule: cls.schedule });
+    return buildClassSessions({ startDate: cls.startDate, totalSessions: cls.totalSessions }, slots).map((session) => ({
+      ...session,
+      classId: cls.classId,
+      subject: cls.subject,
+      studentName: cls.studentName,
+      location: cls.location,
+      status: cls.status,
+    }));
+  }), [activeClasses]);
+
+  const sessionsAtCell = (dateKey, hour) => {
+    const currentStart = hour * 60;
+    const currentEnd = (hour + 1) * 60;
+    return teachingSessions.filter((session) => session.dateKey === dateKey && session.start < currentEnd && session.end > currentStart);
   };
 
-  const classAtCell = (day, hour) => {
-    const classCells = timetableData.classHourMap?.[day] || [];
-    return classCells.find((c) => c.slotHour === hour);
+  const cellState = (day, hour, dateKey = null) => {
+    const classMatches = dateKey ? sessionsAtCell(dateKey, hour) : [];
+    if (classMatches.length) return { type: 'class', classes: classMatches };
+    const avail = (timetableData.availabilityHourMap?.[day] || []).includes(hour);
+    return { type: avail ? 'available' : 'empty' };
   };
 
   const isInDragSelection = (day, hour) => {
@@ -158,10 +174,11 @@ function TutorPortal() {
   };
 
   // Click đơn lẻ vào 1 ô
-  const handleCellClick = async (day, hour) => {
-    const state = cellState(day, hour);
+  const handleCellClick = async (day, hour, dateKey = null) => {
+    const state = cellState(day, hour, dateKey);
     if (state.type === 'class') {
-      toast.info(`Khung giờ này bạn đang dạy lớp "${state.class.subject}" (${state.class.startTime} - ${state.class.endTime}).`);
+      const subjects = state.classes.map((item) => item.subject).join(', ');
+      toast.info(`Khung giờ này bạn đang dạy: ${subjects}.`);
       return;
     }
     try {
@@ -190,9 +207,9 @@ function TutorPortal() {
     }
   };
 
-  const handleCellMouseDown = (day, hour, e) => {
+  const handleCellMouseDown = (day, hour, e, dateKey = null) => {
     if (e.button !== 0) return;
-    const state = cellState(day, hour);
+    const state = cellState(day, hour, dateKey);
     if (state.type === 'class') return;
     setIsDragging(true);
     setDragSelection({ day, startHour: hour, endHour: hour + 1 });
@@ -253,6 +270,9 @@ function TutorPortal() {
     }, 0);
     return { totalSlots: items.length, totalHours };
   }, [timetableData.availability]);
+  const weekTeachingSessions = useMemo(() => teachingSessions
+    .filter((session) => timetableWeekDays.some((day) => day.dateKey === session.dateKey))
+    .sort((a, b) => `${a.dateKey}-${a.start}`.localeCompare(`${b.dateKey}-${b.start}`)), [teachingSessions, timetableWeekDays]);
 
   return <main className="tutor-figma-page"><h1>{pageTitle}</h1>
     {tab === 'dashboard' && <>
@@ -262,8 +282,10 @@ function TutorPortal() {
         <article className="tutor-stat"><span className="tutor-icon purple">$</span><p>Thu nhập tháng này</p><h3>{money(income)}</h3></article>
         <article className="tutor-stat"><span className="tutor-icon yellow">☆</span><p>Đánh giá</p><h3>{avgRating}</h3></article>
       </section>
-      <section className="tutor-dashboard-grid"><div className="tutor-card"><h2>Lịch dạy tuần này</h2><div className="tutor-list">{weekSchedule.length ? weekSchedule.map((item, idx) => <div className="schedule-item" key={idx}><div><strong>{item.subject}</strong><span>{item.studentName || ''}</span><span>Địa chỉ: {item.location || item.address || 'Chưa cập nhật'}</span></div><div className="schedule-time"><b>{item.dayLabel || item.schedule?.[0]?.dayLabel || 'Thứ'}</b><span>{item.startTime || item.schedule?.[0]?.startTime || ''}</span></div></div>) : <p className="muted">Chưa có lịch dạy.</p>}</div></div><div className="tutor-card"><h2>Lớp được đề xuất</h2>{proposedClasses.length ? proposedClasses.slice(0, 4).map((item) => <article className="suggest-card" key={item.classId}><h3>{item.subject} - {item.level}</h3><p>Địa chỉ: {item.location}</p><p>Lịch: {scheduleLabel(item.schedule)}</p><p>Lương dự kiến: {money(item.salaryPerSession * (item.sessionsPerWeek || 2) * 4)}/tháng</p><div className="suggest-actions"><button className="tutor-primary" onClick={() => acceptClass(item)}>Đồng ý nhận lớp</button><button className="tutor-muted-btn" onClick={() => setDeclinedOpen((prev) => [...prev, String(item.classId)])}>Từ chối</button></div></article>) : <p className="muted">Chưa có lớp phù hợp được công khai.</p>}</div></section>
+      <section className="tutor-dashboard-grid"><div className="tutor-card"><h2>Lịch dạy tuần này</h2><div className="tutor-list">{weekSchedule.length ? weekSchedule.map((item, idx) => <div className="schedule-item" key={idx}><div><strong>{item.subject}</strong><span>{item.studentName || ''}</span><span>Địa chỉ: {item.location || item.address || 'Chưa cập nhật'}</span></div><div className="schedule-time"><b>{item.dayLabel || item.schedule?.[0]?.dayLabel || 'Thứ'}</b><span>{item.startTime || item.schedule?.[0]?.startTime || ''}</span></div></div>) : <p className="muted">Chưa có lịch dạy.</p>}</div></div></section>
     </>}
+
+    {tab === 'proposed' && <section className="tutor-card"><h2>Lớp được đề xuất (Phù hợp với lịch rảnh)</h2><div className="teaching-grid tutor-class-management">{proposedClasses.length ? proposedClasses.map((item) => <article className="suggest-card" key={item.classId}><h3>{item.subject} - {item.level}</h3><p>Địa chỉ: {item.location}</p><p>Lịch: {scheduleLabel(item.schedule)}</p><p>Lương dự kiến: {money(item.salaryPerSession * (item.sessionsPerWeek || 2) * 4)}/tháng</p><div className="suggest-actions wrap"><button className="tutor-primary" onClick={() => acceptClass(item)}>Đồng ý nhận lớp</button><button className="tutor-muted-btn" onClick={() => setDeclinedOpen((prev) => [...prev, String(item.classId)])}>Từ chối</button></div></article>) : <p className="muted">Chưa có lớp phù hợp với lịch rảnh của bạn. Hãy cập nhật Lịch rảnh để hệ thống gợi ý tốt hơn.</p>}</div></section>}
 
     {tab === 'profile' && <form className="profile-stack beautiful-profile" onSubmit={(e) => { e.preventDefault(); saveProfile(); }}><section className="tutor-card profile-hero"><div className="profile-avatar">{(profile.fullName || 'GS').slice(0, 2).toUpperCase()}</div><div><h2>{profile.fullName || 'Gia sư'}</h2><p>{profile.university || 'Cập nhật trường học'} • {profile.major || 'Cập nhật chuyên ngành'}</p><span className="rating">★ {avgRating}</span></div></section><section className="tutor-card profile-card"><h2>Thông tin cá nhân</h2><div className="profile-grid two"><label>Họ và tên<input value={profile.fullName || ''} onChange={(e) => setProfile({ ...profile, fullName: e.target.value })} /></label><label>Email<input value={profile.email || ''} readOnly /></label><label>Số điện thoại<input value={profile.phone || ''} onChange={(e) => setProfile({ ...profile, phone: e.target.value })} /></label><label>Địa chỉ<input value={profile.address || ''} onChange={(e) => setProfile({ ...profile, address: e.target.value })} /></label><label>Trường đại học<input value={profile.university || ''} onChange={(e) => setProfile({ ...profile, university: e.target.value })} /></label><label>Chuyên ngành<input value={profile.major || ''} onChange={(e) => setProfile({ ...profile, major: e.target.value })} /></label></div><label>Kinh nghiệm<textarea className="profile-textarea" value={profile.bio || ''} onChange={(e) => setProfile({ ...profile, bio: e.target.value })} /></label></section><section className="tutor-card profile-card"><h2>Năng lực giảng dạy</h2><div className="profile-grid two"><label>Môn có thể dạy<input value={profile.teachableSubjects || ''} onChange={(e) => setProfile({ ...profile, teachableSubjects: e.target.value })} /></label><label>Khối lớp<input value={profile.teachableGrades || ''} onChange={(e) => setProfile({ ...profile, teachableGrades: e.target.value })} /></label></div><label>Khu vực dạy<input value={profile.teachingAreas || ''} onChange={(e) => setProfile({ ...profile, teachingAreas: e.target.value })} /></label></section><button className="tutor-submit full-width">Lưu hồ sơ</button></form>}
 
@@ -282,12 +304,15 @@ function TutorPortal() {
       onDragEnd={handleDragEnd}
       isInDragSelection={isInDragSelection}
       cellState={cellState}
-      classAtCell={classAtCell}
+      timetableWeekStart={timetableWeekStart}
+      setTimetableWeekStart={setTimetableWeekStart}
+      timetableWeekDays={timetableWeekDays}
+      weekTeachingSessions={weekTeachingSessions}
     />}
   </main>;
 }
 
-function TimetableTab({ timetableData, loading, onRefresh, stats, onCellMouseDown, onCellMouseEnter, onCellClick, onDragEnd, isInDragSelection, cellState, classAtCell }) {
+function TimetableTab({ timetableData, loading, onRefresh, stats, onCellMouseDown, onCellMouseEnter, onCellClick, onDragEnd, isInDragSelection, cellState, timetableWeekStart, setTimetableWeekStart, timetableWeekDays, weekTeachingSessions }) {
   const [legendOpen, setLegendOpen] = useState(true);
   return <div className="timetable-tab" onMouseUp={onDragEnd} onMouseLeave={onDragEnd}>
     <section className="tutor-card timetable-intro">
@@ -307,36 +332,47 @@ function TimetableTab({ timetableData, loading, onRefresh, stats, onCellMouseDow
         {legendOpen && <div className="legend-row">
           <span className="legend-chip empty" /> <span>Trống (bấm để thêm)</span>
           <span className="legend-chip available" /> <span>Khung giờ rảnh (bấm để xoá)</span>
-          <span className="legend-chip class" /> <span>Đang dạy lớp</span>
+          <span className="legend-chip class" /> <span>Đang dạy lớp theo ngày cụ thể</span>
           <span className="legend-chip dragging" /> <span>Đang chọn</span>
         </div>}
       </div>
     </section>
 
     <section className="tutor-card timetable-matrix-card">
+      <div className="section-head">
+        <div>
+          <h2>Thời khóa biểu dạy trong tuần</h2>
+          <p className="muted">Tuần {formatWeekRange(timetableWeekStart)}</p>
+        </div>
+        <div className="suggest-actions wrap">
+          <button className="outline-btn compact" onClick={() => setTimetableWeekStart((current) => new Date(current.getFullYear(), current.getMonth(), current.getDate() - 7))}>Tuần trước</button>
+          <button className="outline-btn compact" onClick={() => setTimetableWeekStart(startOfWeek(new Date()))}>Tuần này</button>
+          <button className="outline-btn compact" onClick={() => setTimetableWeekStart((current) => new Date(current.getFullYear(), current.getMonth(), current.getDate() + 7))}>Tuần sau</button>
+        </div>
+      </div>
       <div className="timetable-grid-wrapper">
-        <div className="timetable-grid" style={{ gridTemplateColumns: `80px repeat(${TIMETABLE_DAYS.length}, minmax(110px, 1fr))` }}>
+        <div className="timetable-grid weekly-calendar-grid" style={{ gridTemplateColumns: `80px repeat(${timetableWeekDays.length}, minmax(130px, 1fr))` }}>
           <div className="timetable-header-cell corner" />
-          {TIMETABLE_DAYS.map((d) => <div key={d.code} className="timetable-header-cell day-header">{d.label}</div>)}
+          {timetableWeekDays.map((d) => <div key={d.code} className="timetable-header-cell day-header"><strong>{d.label}</strong><span>{d.dateLabel}</span></div>)}
           {TIMETABLE_HOURS.map((hour) => <>
             <div key={`h-${hour}`} className="timetable-hour-cell">{String(hour).padStart(2, '0')}:00</div>
-            {TIMETABLE_DAYS.map((d) => {
-              const state = cellState(d.code, hour);
+            {timetableWeekDays.map((d) => {
+              const state = cellState(d.code, hour, d.dateKey);
               const inDrag = isInDragSelection(d.code, hour);
-              const cls = classAtCell(d.code, hour);
               const cellClass = ['timetable-cell', `state-${state.type}`, inDrag ? 'is-dragging' : ''].filter(Boolean).join(' ');
               return <div
-                key={`${d.code}-${hour}`}
+                key={`${d.code}-${d.dateKey}-${hour}`}
                 className={cellClass}
-                onMouseDown={(e) => onCellMouseDown(d.code, hour, e)}
+                onMouseDown={(e) => onCellMouseDown(d.code, hour, e, d.dateKey)}
                 onMouseEnter={() => onCellMouseEnter(d.code, hour)}
-                onClick={(e) => { if (e.detail === 1) onCellClick(d.code, hour); }}
-                title={state.type === 'class' ? `Đang dạy: ${cls?.subject || ''} (${cls?.startTime}-${cls?.endTime})` : state.type === 'available' ? `Khung rảnh ${hour}:00 - ${hour + 1}:00 (bấm để xoá)` : `Trống - bấm để thêm ${hour}:00 - ${hour + 1}:00`}
+                onClick={(e) => { if (e.detail === 1) onCellClick(d.code, hour, d.dateKey); }}
+                title={state.type === 'class' ? `Đang dạy: ${state.classes.map((item) => item.subject).join(', ')}` : state.type === 'available' ? `Khung rảnh ${hour}:00 - ${hour + 1}:00 (bấm để xoá)` : `Trống - bấm để thêm ${hour}:00 - ${hour + 1}:00`}
               >
-                {state.type === 'class' && <div className="cell-class-label">
-                  <strong>{cls?.subject || 'Lớp'}</strong>
-                  <small>{cls?.startTime}-{cls?.endTime}</small>
-                </div>}
+                {state.type === 'class' && state.classes.map((cls) => <div className="cell-class-label" key={`${cls.classId}-${cls.sessionNumber}`}>
+                  <strong>{cls.subject || 'Lớp'}</strong>
+                  <small>Buổi {cls.sessionNumber}: {timeFromMinutes(cls.start)}-{timeFromMinutes(cls.end)}</small>
+                  <small>{cls.studentName || 'Học viên'} · {cls.location || '-'}</small>
+                </div>)}
               </div>;
             })}
           </>)}
@@ -374,22 +410,23 @@ function TimetableTab({ timetableData, loading, onRefresh, stats, onCellMouseDow
         ) : <p className="muted">Chưa đăng ký khung giờ rảnh nào. Bấm vào ô trống trong ma trận phía trên để thêm.</p>}
       </article>
       <article className="tutor-card">
-        <h2>Lớp đang dạy ({timetableData.timetable?.length || 0})</h2>
-        {timetableData.timetable?.length ? (
+        <h2>Buổi dạy trong tuần ({weekTeachingSessions.length})</h2>
+        {weekTeachingSessions.length ? (
           <div className="table-shell">
             <table className="tutor-table-new">
-              <thead><tr><th>Thứ</th><th>Giờ</th><th>Môn</th><th>Địa chỉ</th></tr></thead>
+              <thead><tr><th>Ngày</th><th>Giờ</th><th>Môn</th><th>Học viên</th><th>Địa chỉ</th></tr></thead>
               <tbody>
-                {timetableData.timetable.map((t) => <tr key={`${t.classId}-${t.dayOfWeek}`}>
-                  <td>{dayLabelOf(t.dayOfWeek)}</td>
-                  <td>{t.startTime} - {t.endTime}</td>
-                  <td><strong>{t.subject}</strong></td>
-                  <td>{t.location || '-'}</td>
+                {weekTeachingSessions.map((session) => <tr key={`${session.classId}-${session.sessionNumber}`}>
+                  <td>{formatDate(session.date)}</td>
+                  <td>{timeFromMinutes(session.start)} - {timeFromMinutes(session.end)}</td>
+                  <td><strong>{session.subject}</strong></td>
+                  <td>{session.studentName || '-'}</td>
+                  <td>{session.location || '-'}</td>
                 </tr>)}
               </tbody>
             </table>
           </div>
-        ) : <p className="muted">Chưa có lớp đang dạy. Khi nhân viên phân công, lớp sẽ tự động hiển thị ở đây và đè lên các ô tương ứng trong ma trận.</p>}
+        ) : <p className="muted">Tuần này chưa có buổi dạy nào hoặc lớp chưa có ngày bắt đầu/tổng số buổi.</p>}
       </article>
     </section>
   </div>;

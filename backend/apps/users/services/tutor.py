@@ -175,6 +175,31 @@ class TutorService:
         return conflicts
 
     @staticmethod
+    def _is_schedule_match(class_obj, availabilities):
+        slots = parse_schedule_text(class_obj.schedule_detail)
+        if not slots:
+            return False
+        for slot in slots:
+            slot_day = slot.get('dayOfWeek')
+            slot_start = TutorService._parse_hhmm(slot.get('startTime'))
+            slot_end = TutorService._parse_hhmm(slot.get('endTime'))
+            if not slot_day or slot_start is None or slot_end is None:
+                continue
+            
+            covered = False
+            for avail in availabilities:
+                if avail.day_of_week != slot_day:
+                    continue
+                avail_start = avail.start_time.hour * 60 + avail.start_time.minute
+                avail_end = avail.end_time.hour * 60 + avail.end_time.minute
+                if avail_start <= slot_start and avail_end >= slot_end:
+                    covered = True
+                    break
+            if not covered:
+                return False
+        return True
+
+    @staticmethod
     def get_open_classes(filters, tutor=None):
         qs = Class.objects.filter(status='open')
         search = filters.get('search')
@@ -190,7 +215,13 @@ class TutorService:
         qs = qs.order_by('-created_at')
         if not tutor:
             return qs
-        classes = list(qs)
+        
+        tutor_avails = list(tutor.availability.all())
+        classes = []
+        for class_obj in qs:
+            if TutorService._is_schedule_match(class_obj, tutor_avails):
+                classes.append(class_obj)
+        
         active_classes = list(Class.objects.filter(tutor=tutor, status__in=['assigned', 'waiting_tutor', 'teaching']))
         subjects = TutorService._tokens(tutor.teachable_subjects)
         grades = TutorService._tokens(tutor.teachable_grades)
@@ -239,32 +270,23 @@ class TutorService:
                     overlap = new_slot.get('dayOfWeek') == old_slot.get('dayOfWeek') and not (new_slot['endTime'] <= old_slot['startTime'] or new_slot['startTime'] >= old_slot['endTime'])
                     if overlap:
                         return None, class_obj, f'Lịch lớp này trùng với lớp đang dạy: {teaching_class.subject_name}.'
-        existing = ClassApplication.objects.filter(tutor=tutor, class_obj=class_obj).exclude(status='CANCELLED').first()
-        if existing:
-            # Nếu nhân viên đã gửi lời mời trước đó thì gia sư bấm Đồng ý vẫn coi là hợp lệ,
-            # giữ trạng thái PENDING để nhân viên duyệt/phân công ở màn Phân công gia sư.
-            return existing, class_obj, None
+        
+        class_obj.tutor = tutor
+        class_obj.status = 'assigned'
+        class_obj.save(update_fields=['tutor', 'status', 'updated_at'])
+        
         expected_salary = data.get('expectedSalary') or default_salary
-        old_cancelled = ClassApplication.objects.filter(tutor=tutor, class_obj=class_obj, status='CANCELLED').first()
-        if old_cancelled:
-            old_cancelled.cover_note = data.get('coverNote', '')
-            old_cancelled.expected_salary = expected_salary or None
-            old_cancelled.available_schedule_note = data.get('availableScheduleNote', '')
-            old_cancelled.status = 'PENDING'
-            old_cancelled.reviewed_at = None
-            old_cancelled.rejection_reason = None
-            old_cancelled.save()
-            return old_cancelled, class_obj, None
-        try:
-            application = ClassApplication.objects.create(
-                tutor=tutor,
-                class_obj=class_obj,
-                cover_note=data.get('coverNote', ''),
-                expected_salary=expected_salary or None,
-                available_schedule_note=data.get('availableScheduleNote', ''),
-            )
-        except IntegrityError:
-            return None, class_obj, 'Bạn đã đăng ký lớp này rồi.'
+        application, created = ClassApplication.objects.update_or_create(
+            tutor=tutor,
+            class_obj=class_obj,
+            defaults={
+                'cover_note': data.get('coverNote', 'Gia sư nhận lớp trực tiếp.'),
+                'expected_salary': expected_salary or None,
+                'available_schedule_note': data.get('availableScheduleNote', ''),
+                'status': 'APPROVED',
+                'reviewed_at': timezone.now()
+            }
+        )
         return application, class_obj, None
 
     @staticmethod

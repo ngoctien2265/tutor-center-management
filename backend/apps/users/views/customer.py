@@ -104,6 +104,7 @@ def class_payload(enrollment):
         'schedule': parse_schedule_text(cls.schedule_detail),
         'scheduleDetail': cls.schedule_detail,
         'sessionsPerWeek': cls.sessions_per_week,
+        'totalSessions': cls.total_sessions,
         'salaryPerMonth': cls.tuition_fee or cls.salary_per_month,
         'location': cls.address_teaching,
         'requirements': cls.requirements,
@@ -112,21 +113,22 @@ def class_payload(enrollment):
         'enrollmentStatus': enrollment.status,
         'needsParentConfirmation': cls.status == 'waiting_parent' and bool(cls.tutor_id),
         'confirmationMessage': 'Nhân viên đã gửi gia sư phù hợp, vui lòng xác nhận để lớp chuyển sang Đang học.' if cls.status == 'waiting_parent' and cls.tutor_id else '',
-        'student': StudentSerializer(enrollment.student_id).data,
-        'tutor': {
-            'id': tutor.id,
-            'fullName': tutor.full_name,
-            'phone': tutor.user.phone if tutor.user else '',
-            'email': tutor.user.email if tutor.user else '',
-            'university': tutor.university,
-            'major': tutor.major,
-            'bio': tutor.experience_summary,
-            'rating': tutor.rating,
-            'teachableSubjects': tutor.teachable_subjects,
-            'teachableGrades': tutor.teachable_grades,
-            'teachingAreas': tutor.teaching_areas,
-        } if tutor else None,
-    }
+            'student': StudentSerializer(enrollment.student_id).data,
+    'tutor': {
+        'id': tutor.id,
+        'fullName': tutor.full_name,
+        'phone': tutor.user.phone if tutor.user else '',
+        'email': tutor.user.email if tutor.user else '',
+        'university': tutor.university,
+        'major': tutor.major,
+        'bio': tutor.experience_summary,
+        'rating': tutor.rating,
+        'teachableSubjects': tutor.teachable_subjects,
+        'teachableGrades': tutor.teachable_grades,
+        'teachingAreas': tutor.teaching_areas,
+    } if tutor else None,
+    'startDate': cls.start_date,
+}
 
 
 @api_view(['GET'])
@@ -195,22 +197,40 @@ def class_requests(request):
     subject = request.data.get('subject') or request.data.get('subjectName')
     if not subject:
         return fail('Vui lòng nhập môn học cần tìm gia sư.')
-    raw_salary = request.data.get('salaryPerMonth') or request.data.get('expectedFee') or request.data.get('tuitionFee')
-    salary = Decimal(str(raw_salary)) if raw_salary not in [None, '', 0, '0'] else default_monthly_fee(subject, request.data.get('gradeLevel') or target_student.grade_level)
+    raw_hourly = request.data.get('expectedFee') or request.data.get('expectedHourlyRate') or '0'
+    hourly_rate = Decimal(str(raw_hourly)) if str(raw_hourly).replace('.','').isdigit() and Decimal(str(raw_hourly)) > 0 else Decimal('0')
+    # Sessions per week estimate from desired schedule
+    schedule_text = request.data.get('scheduleDetail') or request.data.get('desiredSchedule') or ''
+    slots = schedule_text.split(',') if schedule_text else []
+    est_sessions = max(len(slots), 1)
+    weekly_hours = est_sessions  # each slot = 1 hour
+    monthly_salary = hourly_rate * Decimal(str(weekly_hours)) * Decimal('4.33') if hourly_rate > 0 else default_monthly_fee(subject, request.data.get('gradeLevel') or target_student.grade_level)
+    
+    total_sessions = request.data.get('totalSessions')
+    if total_sessions is not None:
+        try:
+            total_sessions = int(total_sessions)
+        except ValueError:
+            total_sessions = None
+            
     cls = Class.objects.create(
         created_by=request.user,
+        start_date=request.data.get('startDate') or None,
         subject_name=subject,
         grade_level=request.data.get('gradeLevel') or request.data.get('grade_level') or target_student.grade_level or '',
-        schedule_detail=request.data.get('scheduleDetail') or request.data.get('desiredSchedule') or '',
-        sessions_per_week=request.data.get('sessionsPerWeek') or 1,
-        salary_per_month=(salary * Decimal('0.7')).quantize(Decimal('1')),
-        tuition_fee=salary,
+        schedule_detail=schedule_text,
+        sessions_per_week=request.data.get('sessionsPerWeek') or est_sessions,
+        total_sessions=total_sessions,
+        teaching_mode=request.data.get('mode') or 'offline',
+        expected_hourly_rate=hourly_rate,
+        salary_per_month=(monthly_salary * Decimal('0.7')).quantize(Decimal('1')),
+        tuition_fee=monthly_salary.quantize(Decimal('1')),
         address_teaching=request.data.get('area') or request.data.get('location') or target_student.address or '',
         requirements=request.data.get('requirements') or '',
         status='staff_pending',
     )
     enrollment = Enrollment.objects.create(class_id=cls, student_id=target_student, status='unpaid')
-    Transaction.objects.create(user_id=request.user, enrollment_id=enrollment, amount=salary, type='tuition_fee', status='pending')
+    Transaction.objects.create(user_id=request.user, enrollment_id=enrollment, amount=monthly_salary, type='tuition_fee', status='pending')
     return ok(class_payload(enrollment), 'Đã gửi nhu cầu tìm gia sư cho trung tâm.', status.HTTP_201_CREATED)
 
 
