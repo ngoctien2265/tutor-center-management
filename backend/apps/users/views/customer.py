@@ -13,8 +13,8 @@ from apps.feedback.serializers import ReviewSerializer
 from apps.finance.models import Enrollment, Transaction
 from apps.finance.serializers import TransactionSerializer
 from apps.finance.services import TransactionService
-from apps.users.models import Parent, Student, AbsenceRequest
-from apps.users.serializers import ParentSerializer, StudentSerializer, StudentCreateUpdateSerializer, UserSerializer
+from apps.users.models import Student, AbsenceRequest
+from apps.users.serializers import StudentSerializer, StudentCreateUpdateSerializer, UserSerializer
 from apps.users.serializers.tutor import parse_schedule_text
 
 
@@ -32,26 +32,22 @@ def fail(message, code=status.HTTP_400_BAD_REQUEST):
 
 
 def customer_context(user):
-    if getattr(user, 'role', None) == 'parent' and hasattr(user, 'parent_profile'):
-        parent = user.parent_profile
-        return parent, list(parent.students.all())
     if getattr(user, 'role', None) == 'student' and hasattr(user, 'student_profile'):
         student = user.student_profile
-        return student.parent, [student]
+        return student, [student]
     return None, []
 
 
 def require_customer(request):
-    parent, students = customer_context(request.user)
-    if not parent or not students:
-        return None, None, fail('Chỉ tài khoản phụ huynh hoặc học viên mới sử dụng được API này.', status.HTTP_403_FORBIDDEN)
-    return parent, students, None
+    student, students = customer_context(request.user)
+    if not student or not students:
+        return None, None, fail('Chỉ tài khoản học viên mới sử dụng được API này.', status.HTTP_403_FORBIDDEN)
+    return student, students, None
 
 
-def customer_enrollments(parent, students):
-    return Enrollment.objects.select_related('class_id', 'class_id__tutor', 'student_id', 'parent_id').filter(
-        parent_id=parent,
-        student_id__in=students,
+def customer_enrollments(student):
+    return Enrollment.objects.select_related('class_id', 'class_id__tutor', 'student_id').filter(
+        student_id=student,
     ).order_by('-enrolled_at')
 
 
@@ -72,7 +68,7 @@ def ensure_tuition_transaction(enrollment):
         return existing
     cls = enrollment.class_id
     amount = cls.tuition_fee or cls.salary_per_month or default_monthly_fee(cls.subject_name, cls.grade_level)
-    user = enrollment.parent_id.user if enrollment.parent_id and enrollment.parent_id.user else enrollment.student_id.user
+    user = enrollment.student_id.user
     if not user:
         return None
     return Transaction.objects.create(
@@ -136,12 +132,12 @@ def class_payload(enrollment):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def profile(request):
-    parent, students, guard = require_customer(request)
+    student, students, guard = require_customer(request)
     if guard:
         return guard
     return ok({
         'user': UserSerializer(request.user).data,
-        'parent': ParentSerializer(parent).data,
+        'student': StudentSerializer(student).data,
         'students': StudentSerializer(students, many=True).data,
     })
 
@@ -151,90 +147,90 @@ def profile(request):
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def students_collection(request):
-    parent, students, guard = require_customer(request)
+    student, students, guard = require_customer(request)
     if guard:
         return guard
     if request.method == 'GET':
         return ok(StudentSerializer(students, many=True).data)
     serializer = StudentCreateUpdateSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    student = serializer.save(parent=parent)
-    return ok(StudentSerializer(student).data, 'Đã thêm học viên.', status.HTTP_201_CREATED)
+    new_student = serializer.save()
+    return ok(StudentSerializer(new_student).data, 'Đã thêm học viên.', status.HTTP_201_CREATED)
 
 @api_view(['GET', 'PATCH', 'DELETE'])
 @permission_classes([IsAuthenticated])
 def student_detail(request, student_id):
-    parent, students, guard = require_customer(request)
+    student, students, guard = require_customer(request)
     if guard:
         return guard
     try:
-        student = Student.objects.get(pk=student_id, parent=parent, pk__in=[item.id for item in students])
+        target_student = Student.objects.get(pk=student_id, pk__in=[item.id for item in students])
     except Student.DoesNotExist:
         return fail('Không tìm thấy học viên.', status.HTTP_404_NOT_FOUND)
     if request.method == 'GET':
-        return ok(StudentSerializer(student).data)
+        return ok(StudentSerializer(target_student).data)
     if request.method == 'DELETE':
-        if Enrollment.objects.filter(student_id=student).exists():
+        if Enrollment.objects.filter(student_id=target_student).exists():
             return fail('Không thể xóa học viên đã có lớp học trong hệ thống. Bạn có thể cập nhật thông tin thay vì xóa.')
-        student.delete()
+        target_student.delete()
         return ok(message='Đã xóa học viên.')
-    serializer = StudentCreateUpdateSerializer(student, data=request.data, partial=True)
+    serializer = StudentCreateUpdateSerializer(target_student, data=request.data, partial=True)
     serializer.is_valid(raise_exception=True)
-    serializer.save(parent=parent)
-    return ok(StudentSerializer(student).data, 'Đã cập nhật thông tin học viên.')
+    serializer.save()
+    return ok(StudentSerializer(target_student).data, 'Đã cập nhật thông tin học viên.')
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def class_requests(request):
-    parent, students, guard = require_customer(request)
+    student, students, guard = require_customer(request)
     if guard:
         return guard
     student_id = request.data.get('studentId') or request.data.get('student')
-    student = students[0]
+    target_student = students[0]
     if student_id:
         matches = [item for item in students if str(item.id) == str(student_id)]
         if not matches:
             return fail('Học viên không thuộc tài khoản hiện tại.', status.HTTP_403_FORBIDDEN)
-        student = matches[0]
+        target_student = matches[0]
     subject = request.data.get('subject') or request.data.get('subjectName')
     if not subject:
         return fail('Vui lòng nhập môn học cần tìm gia sư.')
     raw_salary = request.data.get('salaryPerMonth') or request.data.get('expectedFee') or request.data.get('tuitionFee')
-    salary = Decimal(str(raw_salary)) if raw_salary not in [None, '', 0, '0'] else default_monthly_fee(subject, request.data.get('gradeLevel') or student.grade_level)
+    salary = Decimal(str(raw_salary)) if raw_salary not in [None, '', 0, '0'] else default_monthly_fee(subject, request.data.get('gradeLevel') or target_student.grade_level)
     cls = Class.objects.create(
         created_by=request.user,
         subject_name=subject,
-        grade_level=request.data.get('gradeLevel') or request.data.get('grade_level') or student.grade_level or '',
+        grade_level=request.data.get('gradeLevel') or request.data.get('grade_level') or target_student.grade_level or '',
         schedule_detail=request.data.get('scheduleDetail') or request.data.get('desiredSchedule') or '',
         sessions_per_week=request.data.get('sessionsPerWeek') or 1,
         salary_per_month=(salary * Decimal('0.7')).quantize(Decimal('1')),
         tuition_fee=salary,
-        address_teaching=request.data.get('area') or request.data.get('location') or parent.address or '',
+        address_teaching=request.data.get('area') or request.data.get('location') or target_student.address or '',
         requirements=request.data.get('requirements') or '',
         status='staff_pending',
     )
-    enrollment = Enrollment.objects.create(class_id=cls, student_id=student, parent_id=parent, status='unpaid')
-    Transaction.objects.create(user_id=parent.user, enrollment_id=enrollment, amount=salary, type='tuition_fee', status='pending')
+    enrollment = Enrollment.objects.create(class_id=cls, student_id=target_student, status='unpaid')
+    Transaction.objects.create(user_id=request.user, enrollment_id=enrollment, amount=salary, type='tuition_fee', status='pending')
     return ok(class_payload(enrollment), 'Đã gửi nhu cầu tìm gia sư cho trung tâm.', status.HTTP_201_CREATED)
 
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def classes(request):
-    parent, students, guard = require_customer(request)
+    student, students, guard = require_customer(request)
     if guard:
         return guard
-    return ok([class_payload(enrollment) for enrollment in customer_enrollments(parent, students)])
+    return ok([class_payload(enrollment) for enrollment in customer_enrollments(student)])
 
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def timetable(request):
-    parent, students, guard = require_customer(request)
+    student, students, guard = require_customer(request)
     if guard:
         return guard
     items = []
-    for enrollment in customer_enrollments(parent, students).filter(class_id__status__in=['open', 'assigned', 'teaching']):
+    for enrollment in customer_enrollments(student).filter(class_id__status__in=['open', 'assigned', 'teaching']):
         cls = enrollment.class_id
         for slot in parse_schedule_text(cls.schedule_detail):
             items.append({
@@ -254,10 +250,10 @@ def timetable(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def payments(request):
-    parent, students, guard = require_customer(request)
+    student, students, guard = require_customer(request)
     if guard:
         return guard
-    enrollments = list(customer_enrollments(parent, students))
+    enrollments = list(customer_enrollments(student))
     for enrollment in enrollments:
         ensure_tuition_transaction(enrollment)
     enrollment_ids = [enrollment.id for enrollment in enrollments]
@@ -271,10 +267,10 @@ def payments(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def pay(request, transaction_id):
-    parent, students, guard = require_customer(request)
+    student, students, guard = require_customer(request)
     if guard:
         return guard
-    enrollment_ids = customer_enrollments(parent, students).values_list('id', flat=True)
+    enrollment_ids = customer_enrollments(student).values_list('id', flat=True)
     try:
         transaction = Transaction.objects.get(pk=transaction_id, enrollment_id__in=enrollment_ids, type='tuition_fee')
     except Transaction.DoesNotExist:
@@ -290,12 +286,12 @@ def pay(request, transaction_id):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def confirm_tutor(request, class_id):
-    parent, students, guard = require_customer(request)
+    student, students, guard = require_customer(request)
     if guard:
         return guard
-    enrollment = customer_enrollments(parent, students).filter(class_id_id=class_id).select_related('class_id').first()
+    enrollment = customer_enrollments(student).filter(class_id_id=class_id).select_related('class_id').first()
     if not enrollment:
-        return fail('Không tìm thấy lớp của phụ huynh.', status.HTTP_404_NOT_FOUND)
+        return fail('Không tìm thấy lớp của học viên.', status.HTTP_404_NOT_FOUND)
     cls = enrollment.class_id
     decision = request.data.get('decision') or request.data.get('status') or 'APPROVED'
     if cls.status != 'waiting_parent' or not cls.tutor_id:
@@ -318,10 +314,10 @@ def confirm_tutor(request, class_id):
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def reviews(request, class_id=None):
-    parent, students, guard = require_customer(request)
+    student, students, guard = require_customer(request)
     if guard:
         return guard
-    enrollment_qs = customer_enrollments(parent, students)
+    enrollment_qs = customer_enrollments(student)
     if request.method == 'GET':
         qs = Review.objects.filter(user_id=request.user, class_id__in=enrollment_qs.values_list('class_id_id', flat=True))
         return ok(ReviewSerializer(qs, many=True).data)

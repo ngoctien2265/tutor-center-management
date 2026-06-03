@@ -9,7 +9,7 @@ class StudentViewSet(viewsets.ModelViewSet):
     queryset = Student.objects.all()
     serializer_class = StudentSerializer
     permission_classes = [IsAuthenticated]
-    filterset_fields = ['parent', 'grade_level']
+    filterset_fields = ['grade_level']
     search_fields = ['full_name', 'school_name']
 
     def get_serializer_class(self):

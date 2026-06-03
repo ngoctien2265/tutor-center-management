@@ -1,6 +1,6 @@
 from django.db import models
 from apps.classes.models import Class
-from apps.users.models import User, Student, Parent
+from apps.users.models import User, Student
 
 
 class Enrollment(models.Model):
@@ -12,14 +12,13 @@ class Enrollment(models.Model):
         ('dropped', 'Đã dừng'),
         ('completed', 'Hoàn thành'),
     )
-    
+
     class_id = models.ForeignKey(Class, on_delete=models.CASCADE, related_name='enrollments')
     student_id = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='enrollments')
-    parent_id = models.ForeignKey(Parent, on_delete=models.SET_NULL, null=True, blank=True, related_name='enrollments')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='unpaid')
     enrolled_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
         unique_together = ['class_id', 'student_id']
         ordering = ['-enrolled_at']
@@ -39,13 +38,13 @@ class Transaction(models.Model):
         ('commission', 'Hoa hồng trung tâm'),
         ('refund', 'Hoàn tiền'),
     )
-    
+
     STATUS_CHOICES = (
         ('pending', 'Chờ xác nhận'),
         ('success', 'Đã thanh toán'),
         ('failed', 'Thất bại'),
     )
-    
+
     user_id = models.ForeignKey(User, on_delete=models.CASCADE, related_name='transactions')
     enrollment_id = models.ForeignKey(Enrollment, on_delete=models.SET_NULL, null=True, blank=True, related_name='transactions')
     amount = models.DecimalField(max_digits=12, decimal_places=2)
@@ -53,7 +52,7 @@ class Transaction(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
         ordering = ['-created_at']
         indexes = [

@@ -19,8 +19,6 @@ class UserSerializer(serializers.ModelSerializer):
     def _profile_name(self, obj):
         if obj.role == 'tutor' and hasattr(obj, 'tutor_profile'):
             return obj.tutor_profile.full_name
-        if obj.role == 'parent' and hasattr(obj, 'parent_profile'):
-            return obj.parent_profile.full_name
         if obj.role == 'student' and hasattr(obj, 'student_profile'):
             return obj.student_profile.full_name
         return obj.get_full_name() or obj.first_name or obj.username
@@ -34,8 +32,8 @@ class UserSerializer(serializers.ModelSerializer):
     def get_address(self, obj):
         if obj.role == 'tutor' and hasattr(obj, 'tutor_profile'):
             return obj.tutor_profile.address
-        if obj.role == 'parent' and hasattr(obj, 'parent_profile'):
-            return obj.parent_profile.address
+        if obj.role == 'student' and hasattr(obj, 'student_profile'):
+            return obj.student_profile.address
         return None
 
 

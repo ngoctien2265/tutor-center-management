@@ -24,7 +24,7 @@ class ClassSerializer(serializers.ModelSerializer):
 
     def _enrollment(self, obj):
         try:
-            return obj.enrollments.select_related('student_id', 'parent_id', 'parent_id__user').first()
+            return obj.enrollments.select_related('student_id').first()
         except Exception:
             return None
 
@@ -48,16 +48,16 @@ class ClassSerializer(serializers.ModelSerializer):
 
     def get_parent(self, obj):
         enrollment = self._enrollment(obj)
-        parent = enrollment.parent_id if enrollment else None
-        if not parent:
+        student = enrollment.student_id if enrollment else None
+        if not student:
             return None
         return {
-            'id': parent.id,
-            'full_name': parent.full_name,
-            'fullName': parent.full_name,
-            'phone': parent.phone or (parent.user.phone if parent.user else ''),
-            'email': parent.user.email if parent.user else '',
-            'address': parent.address,
+            'id': student.id,
+            'full_name': student.parent_name or student.full_name,
+            'fullName': student.parent_name or student.full_name,
+            'phone': student.parent_phone or '',
+            'email': student.parent_email or '',
+            'address': student.address or '',
         }
 
 

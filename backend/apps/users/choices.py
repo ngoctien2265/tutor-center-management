@@ -3,7 +3,6 @@ USER_ROLE_CHOICES = (
     ('staff', 'Staff'),
     ('student', 'Student'),
     ('tutor', 'Tutor'),
-    ('parent', 'Parent'),
 )
 
 USER_STATUS_CHOICES = (

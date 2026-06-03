@@ -1,13 +1,11 @@
 from rest_framework import serializers
 
 from ..models import Student
-from .parent import ParentSerializer
 from .user import UserSerializer
 
 
 class StudentSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
-    parent = ParentSerializer(read_only=True)
 
     class Meta:
         model = Student
@@ -16,9 +14,11 @@ class StudentSerializer(serializers.ModelSerializer):
 
 
 class StudentCreateUpdateSerializer(serializers.ModelSerializer):
-    # Giao diện dùng dạng "Lớp 10", "Lớp 11" nên để CharField tự do thay vì bó cứng choices G10/G11.
     grade_level = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 
     class Meta:
         model = Student
-        fields = ['full_name', 'gender', 'birthday', 'grade_level', 'school_name', 'note', 'parent']
+        fields = [
+            'user', 'full_name', 'gender', 'birthday', 'grade_level', 'school_name',
+            'parent_name', 'parent_phone', 'parent_email', 'address', 'note'
+        ]

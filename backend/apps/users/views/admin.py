@@ -16,7 +16,7 @@ from apps.classes.models import Class
 from apps.classes.serializers import ClassSerializer
 from apps.feedback.models import Review
 from apps.finance.models import Enrollment, Transaction
-from apps.users.models import Parent, Student, Tutor, User, TeachingLog
+from apps.users.models import Student, Tutor, User, TeachingLog
 from apps.users.serializers import TutorSerializer, UserSerializer
 
 
@@ -66,8 +66,6 @@ def display_user_name(user):
         return 'Chưa cập nhật'
     if getattr(user, 'role', None) == 'tutor' and hasattr(user, 'tutor_profile'):
         return user.tutor_profile.full_name
-    if getattr(user, 'role', None) == 'parent' and hasattr(user, 'parent_profile'):
-        return user.parent_profile.full_name
     if getattr(user, 'role', None) == 'student' and hasattr(user, 'student_profile'):
         return user.student_profile.full_name
     return user.get_full_name() or user.first_name or user.username
@@ -175,10 +173,10 @@ def student_sections(student):
         {
             'title': 'Phụ huynh / liên hệ',
             'items': [
-                profile_item('Họ tên phụ huynh', student.parent.full_name if student.parent else None),
-                profile_item('Email phụ huynh', student.parent.user.email if student.parent and student.parent.user else None),
-                profile_item('SĐT phụ huynh', student.parent.phone if student.parent else None),
-                profile_item('Địa chỉ', student.parent.address if student.parent else None),
+                profile_item('Họ tên phụ huynh', student.parent_name),
+                profile_item('Email phụ huynh', student.parent_email),
+                profile_item('SĐT phụ huynh', student.parent_phone),
+                profile_item('Địa chỉ', student.address),
             ],
         },
         {'title': 'Lớp đang học', 'items': enrollments},
@@ -195,54 +193,10 @@ def build_profile(user):
 
     if user.role == 'student':
         try:
-            student = Student.objects.select_related('user', 'parent', 'parent__user').get(user=user)
+            student = Student.objects.select_related('user').get(user=user)
         except Student.DoesNotExist:
             return {'user': user_data(user), 'roleLabel': 'Học viên', 'sections': staff_sections(user)}
         return {'user': user_data(user), 'roleLabel': 'Học viên', 'profileName': student.full_name, 'sections': student_sections(student)}
-
-    if user.role == 'parent':
-        try:
-            parent = Parent.objects.select_related('user').prefetch_related('students').get(user=user)
-        except Parent.DoesNotExist:
-            return {'user': user_data(user), 'roleLabel': 'Phụ huynh', 'sections': staff_sections(user)}
-        enrollments = Enrollment.objects.select_related('class_id', 'student_id', 'class_id__tutor').filter(parent_id=parent)
-        classes = [
-            {
-                'Học viên': enrollment.student_id.full_name,
-                'Lớp học': enrollment.class_id.subject_name,
-                'Gia sư': enrollment.class_id.tutor.full_name if enrollment.class_id.tutor else 'Chưa có',
-                'Trạng thái': enrollment.class_id.get_status_display(),
-            }
-            for enrollment in enrollments
-        ]
-        students = [
-            {
-                'Họ tên học viên': student.full_name,
-                'Khối lớp': student.grade_level or 'Chưa cập nhật',
-                'Trường học': student.school_name or 'Chưa cập nhật',
-            }
-            for student in parent.students.all()
-        ]
-        return {
-            'user': user_data(user),
-            'roleLabel': 'Phụ huynh',
-            'profileName': parent.full_name,
-            'sections': [
-                {
-                    'title': 'Thông tin phụ huynh',
-                    'items': [
-                        profile_item('Họ tên', parent.full_name),
-                        profile_item('Email', user.email),
-                        profile_item('Số điện thoại', parent.phone or user.phone),
-                        profile_item('Địa chỉ', parent.address),
-                        profile_item('Số học viên', parent.students.count()),
-                        profile_item('Số lớp đang học', enrollments.filter(class_id__status__in=ACTIVE_CLASS_STATUSES).count()),
-                    ],
-                },
-                {'title': 'Danh sách học viên', 'items': students},
-                {'title': 'Lớp của phụ huynh', 'items': classes},
-            ],
-        }
 
     return {'user': user_data(user), 'roleLabel': 'Nhân viên' if user.role == 'staff' else 'Tài khoản', 'profileName': display_user_name(user), 'sections': staff_sections(user)}
 
@@ -412,7 +366,6 @@ def dashboard(request):
             'staff': User.objects.filter(role='staff').count(),
             'tutors': Tutor.objects.count(),
             'students': Student.objects.count(),
-            'parents': Parent.objects.count(),
             'classes': Class.objects.count(),
             'activeClasses': status_counts['teaching'],
             'enrollments': Enrollment.objects.count(),
@@ -460,7 +413,7 @@ def finance_summary(request):
     tutor_salary_total = Class.objects.filter(tutor__isnull=False, status__in=ACTIVE_CLASS_STATUSES + ['completed']).aggregate(total=Sum('salary_per_month'))['total'] or 0
 
     recent_payments = []
-    for tx in Transaction.objects.select_related('user_id', 'user_id__parent_profile', 'enrollment_id', 'enrollment_id__class_id').filter(type='tuition_fee').order_by('-created_at')[:20]:
+    for tx in Transaction.objects.select_related('user_id', 'user_id__student_profile', 'enrollment_id', 'enrollment_id__class_id').filter(type='tuition_fee').order_by('-created_at')[:20]:
         enrollment = tx.enrollment_id
         recent_payments.append({
             'id': tx.id,
@@ -709,13 +662,13 @@ def approve_user(request, user_id):
     if guard:
         return guard
     try:
-        user = User.objects.select_related('tutor_profile', 'parent_profile').get(pk=user_id)
+        user = User.objects.select_related('tutor_profile').get(pk=user_id)
     except User.DoesNotExist:
         return fail('Không tìm thấy tài khoản.', status.HTTP_404_NOT_FOUND)
     if user.role == 'admin' or user.is_superuser:
         return fail('Không duyệt tài khoản admin tại màn hình này.')
-    if user.role not in ['staff', 'tutor', 'parent']:
-        return fail('Chỉ duyệt tài khoản Nhân viên, Gia sư hoặc Phụ huynh.')
+    if user.role not in ['staff', 'tutor', 'student']:
+        return fail('Chỉ duyệt tài khoản Nhân viên, Gia sư hoặc Học viên.')
 
     user.status = 'active'
     update_fields = ['status', 'updated_at']
@@ -736,13 +689,13 @@ def reject_user(request, user_id):
     if guard:
         return guard
     try:
-        user = User.objects.select_related('tutor_profile', 'parent_profile').get(pk=user_id)
+        user = User.objects.select_related('tutor_profile').get(pk=user_id)
     except User.DoesNotExist:
         return fail('Không tìm thấy tài khoản.', status.HTTP_404_NOT_FOUND)
     if user.role == 'admin' or user.is_superuser:
         return fail('Không hủy duyệt tài khoản admin.')
-    if user.role not in ['staff', 'tutor', 'parent']:
-        return fail('Chỉ hủy duyệt tài khoản Nhân viên, Gia sư hoặc Phụ huynh.')
+    if user.role not in ['staff', 'tutor', 'student']:
+        return fail('Chỉ hủy duyệt tài khoản Nhân viên, Gia sư hoặc Học viên.')
 
     user.status = 'inactive'
     update_fields = ['status', 'updated_at']
@@ -785,8 +738,8 @@ def validate_user_payload(data, partial=False, current_user=None):
             phone_qs = phone_qs.exclude(pk=current_user.pk)
         if phone and phone_qs.exists():
             errors['phone'] = 'Số điện thoại đã tồn tại.'
-    if role is not None and role not in ['staff', 'tutor', 'parent']:
-        errors['role'] = 'Vai trò chỉ được chọn: Nhân viên, Gia sư hoặc Phụ huynh.'
+    if role is not None and role not in ['staff', 'tutor', 'student']:
+        errors['role'] = 'Vai trò chỉ được chọn: Nhân viên, Gia sư hoặc Học viên.'
     if not partial and len(password) < 6:
         errors['password'] = 'Mật khẩu tối thiểu 6 ký tự.'
     if errors:
@@ -814,7 +767,7 @@ def create_user(request):
     if guard:
         return guard
     if request.method == 'GET':
-        qs = User.objects.select_related('tutor_profile', 'parent_profile').filter(role__in=['staff', 'tutor', 'parent']).order_by('-date_joined')
+        qs = User.objects.select_related('tutor_profile').filter(role__in=['staff', 'tutor', 'student']).order_by('-date_joined')
         role = request.GET.get('role')
         if role:
             qs = qs.filter(role=role)
@@ -828,8 +781,8 @@ def create_user(request):
         return fail(errors)
 
     role = data['role']
-    if role not in ['staff', 'tutor', 'parent']:
-        return fail('Chỉ được thêm tài khoản Nhân viên, Gia sư hoặc Phụ huynh.')
+    if role not in ['staff', 'tutor', 'student']:
+        return fail('Chỉ được thêm tài khoản Nhân viên, Gia sư hoặc Học viên.')
 
     username = request.data.get('username') or make_username(data['email'], data['full_name'])
     user = User.objects.create_user(
@@ -855,11 +808,16 @@ def create_user(request):
             teaching_areas=request.data.get('teachingAreas') or '',
             is_verified=False,
         )
-    elif role == 'parent':
-        parent = Parent.objects.create(user=user, full_name=data['full_name'], phone=data['phone'], address=address)
-        student_name = request.data.get('studentName')
-        if student_name:
-            Student.objects.create(parent=parent, full_name=student_name, grade_level=request.data.get('gradeLevel') or 'G10')
+    elif role == 'student':
+        student_data = {
+            'full_name': data['full_name'],
+            'parent_name': request.data.get('parentName', data['full_name']),
+            'parent_phone': data.get('phone'),
+            'parent_email': data.get('email'),
+            'address': address,
+            'grade_level': request.data.get('gradeLevel') or 'G10',
+        }
+        Student.objects.create(user=user, **student_data)
 
     return ok(UserSerializer(user, context={'request': request}).data, 'Đã thêm tài khoản.', status.HTTP_201_CREATED)
 
@@ -908,13 +866,22 @@ def update_user(request, user_id):
             if api_key in request.data:
                 setattr(tutor, field, request.data.get(api_key) or '')
         tutor.save()
-    elif user.role == 'parent':
-        parent, _ = Parent.objects.get_or_create(user=user, defaults={'full_name': full_name, 'phone': user.phone})
-        parent.full_name = full_name
-        parent.phone = user.phone
+    elif user.role == 'student':
+        student, _ = Student.objects.get_or_create(user=user, defaults={
+            'full_name': full_name,
+            'parent_phone': user.phone,
+            'parent_email': user.email
+        })
+        student.full_name = full_name
         if address is not None:
-            parent.address = address
-        parent.save()
+            student.address = address
+        if 'parentName' in request.data:
+            student.parent_name = request.data['parentName']
+        if 'parentPhone' in request.data:
+            student.parent_phone = request.data['parentPhone']
+        if 'parentEmail' in request.data:
+            student.parent_email = request.data['parentEmail']
+        student.save()
 
     return ok(UserSerializer(user, context={'request': request}).data, 'Đã cập nhật tài khoản.')
 
@@ -933,61 +900,3 @@ def delete_user(request, user_id):
         return fail('Không được xóa tài khoản admin.')
     user.delete()
     return ok(message='Đã xóa tài khoản khỏi hệ thống.')
-
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def parents(request):
-    guard = require_admin(request)
-    if guard:
-        return guard
-    qs = Parent.objects.select_related('user').prefetch_related('students')
-    if request.GET.get('search'):
-        q = request.GET['search']
-        qs = qs.filter(Q(full_name__icontains=q) | Q(user__email__icontains=q) | Q(phone__icontains=q))
-    items = []
-    for parent in qs:
-        enrollments = Enrollment.objects.filter(parent_id=parent).select_related('class_id', 'class_id__tutor')
-        items.append({
-            'id': parent.id,
-            'userId': parent.user_id,
-            'name': parent.full_name,
-            'email': parent.user.email,
-            'phone': parent.phone or parent.user.phone,
-            'students': parent.students.count(),
-            'activeClasses': enrollments.filter(class_id__status__in=ACTIVE_CLASS_STATUSES).count(),
-            'status': parent.user.status,
-            'isActive': parent.user.is_active,
-            'address': parent.address,
-        })
-    return ok({'items': items, 'pagination': {'page': 1, 'limit': len(items), 'total': len(items)}})
-
-
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def verify_parent(request, parent_id):
-    guard = require_admin(request)
-    if guard:
-        return guard
-    try:
-        parent = Parent.objects.select_related('user').get(pk=parent_id)
-    except Parent.DoesNotExist:
-        return fail('Không tìm thấy phụ huynh.', status.HTTP_404_NOT_FOUND)
-    parent.user.status = 'active'
-    parent.user.save(update_fields=['status', 'updated_at'])
-    return ok(build_profile(parent.user), 'Đã duyệt tài khoản phụ huynh.')
-
-
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def unverify_parent(request, parent_id):
-    guard = require_admin(request)
-    if guard:
-        return guard
-    try:
-        parent = Parent.objects.select_related('user').get(pk=parent_id)
-    except Parent.DoesNotExist:
-        return fail('Không tìm thấy phụ huynh.', status.HTTP_404_NOT_FOUND)
-    parent.user.status = 'inactive'
-    parent.user.save(update_fields=['status', 'updated_at'])
-    return ok(build_profile(parent.user), 'Đã hủy duyệt tài khoản phụ huynh.')

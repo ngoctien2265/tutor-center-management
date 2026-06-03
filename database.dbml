@@ -1,0 +1,300 @@
+// Tutor Center Management System - Database Schema
+// Generated: 2026-06-02
+// Updated: Removed Parent table, merged into Student
+
+Project tutor_center_management {
+  database_type: 'PostgreSQL'
+  Note: 'Database schema for Tutor Center Management System'
+}
+
+// ========================================
+// User Management Tables
+// ========================================
+
+Table users {
+  id integer [pk, increment]
+  username varchar(150) [unique, not null]
+  email varchar(254) [unique, not null]
+  password varchar(128) [not null]
+  first_name varchar(150)
+  last_name varchar(150)
+  phone varchar(20) [unique]
+  role varchar(20) [not null, note: 'admin, staff, student, tutor']
+  status varchar(20) [default: 'active', note: 'active, inactive, banned']
+  is_active boolean [default: true]
+  is_staff boolean [default: false]
+  is_superuser boolean [default: false]
+  date_joined timestamp [default: `now()`]
+  last_login timestamp
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+
+  indexes {
+    (role, status)
+    email
+  }
+
+  Note: 'Core user model extending Django AbstractUser'
+}
+
+Table tutors {
+  id integer [pk, increment]
+  user_id integer [ref: - users.id, not null]
+  full_name varchar(255) [not null]
+  gender varchar(10) [note: 'M, F, O']
+  birthday date
+  address text
+  university varchar(255)
+  major varchar(255)
+  teachable_subjects text
+  teachable_grades text
+  teaching_areas text
+  experience_summary text
+  rating decimal(3,2) [default: 0.0, note: '0.0 to 5.0']
+  is_verified boolean [default: false]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+
+  indexes {
+    (is_verified, rating)
+  }
+
+  Note: 'Tutor profile information'
+}
+
+Table students {
+  id integer [pk, increment]
+  user_id integer [ref: - users.id, not null]
+  full_name varchar(255) [not null]
+  gender varchar(10) [note: 'M, F, O']
+  birthday date
+  grade_level varchar(10) [note: 'K1-K3, G1-G12']
+  school_name varchar(255)
+  parent_name varchar(255) [note: 'Parent/guardian name']
+  parent_phone varchar(20) [note: 'Parent/guardian phone']
+  parent_email varchar(254) [note: 'Parent/guardian email']
+  address text [note: 'Student/family address']
+  note text
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+
+  indexes {
+    grade_level
+    parent_phone
+  }
+
+  Note: 'Student profile with integrated parent information'
+}
+
+Table tutor_qualifications {
+  id integer [pk, increment]
+  tutor_id integer [ref: > tutors.id, not null]
+  document_type varchar(40) [not null, note: 'DEGREE, TRANSCRIPT, CERTIFICATE']
+  title varchar(255) [not null]
+  description text
+  file varchar(255)
+  status varchar(30) [default: 'PENDING_REVIEW', note: 'PENDING_REVIEW, APPROVED, REJECTED']
+  uploaded_at timestamp [default: `now()`]
+
+  Note: 'Tutor qualification documents'
+}
+
+Table tutor_availability {
+  id integer [pk, increment]
+  tutor_id integer [ref: > tutors.id, not null]
+  day_of_week varchar(20) [not null, note: 'MONDAY to SUNDAY']
+  start_time time [not null]
+  end_time time [not null]
+
+  indexes {
+    (day_of_week, start_time)
+  }
+
+  Note: 'Tutor weekly availability schedule'
+}
+
+// ========================================
+// Class Management Tables
+// ========================================
+
+Table classes {
+  id integer [pk, increment]
+  tutor_id integer [ref: > tutors.id]
+  created_by_id integer [ref: > users.id, not null]
+  subject_name varchar(255) [not null]
+  grade_level varchar(50)
+  schedule_detail text
+  sessions_per_week integer [default: 1]
+  salary_per_month decimal(10,2) [not null]
+  tuition_fee decimal(12,2) [default: 0]
+  address_teaching text
+  requirements text
+  admin_note text
+  status varchar(20) [default: 'open', note: 'staff_pending, pending_admin, open, waiting_parent, waiting_tutor, assigned, teaching, paused, completed, cancelled']
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+
+  indexes {
+    (status, tutor_id)
+    created_at
+  }
+
+  Note: 'Class information and assignments'
+}
+
+Table class_applications {
+  id integer [pk, increment]
+  tutor_id integer [ref: > tutors.id, not null]
+  class_id integer [ref: > classes.id, not null]
+  cover_note text
+  expected_salary decimal(12,2)
+  available_schedule_note text
+  status varchar(20) [default: 'PENDING', note: 'PENDING, APPROVED, REJECTED, CANCELLED']
+  submitted_at timestamp [default: `now()`]
+  reviewed_at timestamp
+  rejection_reason text
+
+  indexes {
+    (tutor_id, class_id) [unique]
+  }
+
+  Note: 'Tutor applications for open classes'
+}
+
+Table teaching_logs {
+  id integer [pk, increment]
+  tutor_id integer [ref: > tutors.id, not null]
+  class_id integer [ref: > classes.id, not null]
+  session_date date [not null]
+  start_time time [not null]
+  end_time time [not null]
+  topic varchar(255) [not null]
+  content text
+  student_understanding_level varchar(20) [default: 'GOOD', note: 'GOOD, BAD']
+  attendance_status varchar(20) [default: 'PRESENT', note: 'PRESENT, ABSENT, LATE']
+  homework text
+  note text
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+
+  indexes {
+    (session_date, start_time) [name: 'idx_session_datetime']
+  }
+
+  Note: 'Teaching session logs and attendance'
+}
+
+Table absence_requests {
+  id integer [pk, increment]
+  tutor_id integer [ref: > tutors.id, not null]
+  class_id integer [ref: > classes.id, not null]
+  session_date date [not null]
+  reason text [not null]
+  request_type varchar(30) [not null, note: 'ABSENCE_ONLY, ABSENCE_WITH_MAKEUP, RESCHEDULE']
+  proposed_makeup_date date
+  proposed_start_time time
+  proposed_end_time time
+  note text
+  status varchar(20) [default: 'PENDING', note: 'PENDING, APPROVED, REJECTED, CANCELLED']
+  admin_note text
+  created_at timestamp [default: `now()`]
+
+  Note: 'Tutor absence and makeup class requests'
+}
+
+Table refund_requests {
+  id integer [pk, increment]
+  tutor_id integer [ref: > tutors.id, not null]
+  class_id integer [ref: > classes.id, not null]
+  receiving_fee_id varchar(100)
+  amount decimal(12,2) [not null]
+  approved_amount decimal(12,2)
+  reason text [not null]
+  bank_name varchar(100) [not null]
+  account_number varchar(100) [not null]
+  account_holder varchar(255) [not null]
+  status varchar(20) [default: 'PENDING', note: 'PENDING, APPROVED, REJECTED, COMPLETED, CANCELLED']
+  admin_note text
+  created_at timestamp [default: `now()`]
+
+  Note: 'Tutor refund requests'
+}
+
+// ========================================
+// Finance Management Tables
+// ========================================
+
+Table enrollments {
+  id integer [pk, increment]
+  class_id integer [ref: > classes.id, not null]
+  student_id integer [ref: > students.id, not null]
+  status varchar(20) [default: 'unpaid', note: 'unpaid, paid, overdue, active, dropped, completed']
+  enrolled_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+
+  indexes {
+    (class_id, student_id) [unique]
+    (status, class_id)
+    student_id
+  }
+
+  Note: 'Student enrollment in classes'
+}
+
+Table transactions {
+  id integer [pk, increment]
+  user_id integer [ref: > users.id, not null]
+  enrollment_id integer [ref: > enrollments.id]
+  amount decimal(12,2) [not null]
+  type varchar(20) [not null, note: 'tuition_fee, tutor_salary, commission, refund']
+  status varchar(20) [default: 'pending', note: 'pending, success, failed']
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+
+  indexes {
+    (type, status)
+    user_id
+  }
+
+  Note: 'Financial transactions (payments, salaries, etc.)'
+}
+
+// ========================================
+// Feedback Management Tables
+// ========================================
+
+Table reviews {
+  id integer [pk, increment]
+  class_id integer [ref: > classes.id, not null]
+  user_id integer [ref: > users.id, not null]
+  star_rating integer [not null, note: '1 to 5']
+  comment text
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+
+  indexes {
+    (class_id, user_id) [unique]
+    (class_id, star_rating)
+    user_id
+  }
+
+  Note: 'User reviews for classes'
+}
+
+// ========================================
+// Additional Tables (if exists)
+// ========================================
+
+Table staff {
+  id integer [pk, increment]
+  user_id integer [ref: - users.id, not null]
+  full_name varchar(255)
+  phone varchar(20)
+  department varchar(100)
+  position varchar(100)
+  is_verified boolean [default: false]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+
+  Note: 'Staff member profile (optional)'
+}

@@ -6,7 +6,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import axios from 'axios';
 import './Navigation.css';
 
-const roleLabels = { admin: 'Admin', staff: 'Nhân viên', tutor: 'Gia sư', parent: 'Phụ huynh', student: 'Học viên' };
+const roleLabels = { admin: 'Admin', staff: 'Nhân viên', tutor: 'Gia sư', student: 'Học viên' };
 const statusLabels = { active: 'Đã duyệt', inactive: 'Chờ duyệt', rejected: 'Không duyệt' };
 
 function AccountModal({ account, onClose }) {
@@ -83,22 +83,18 @@ function Navigation({ onLogout }) {
     ['▦', '/tutor', 'Tổng quan'],
     ['♙', '/tutor?tab=profile', 'Hồ sơ cá nhân'],
     ['▰', '/tutor?tab=classes', 'Lớp đang dạy'],
+    ['⌚', '/tutor?tab=timetable', 'Lịch rảnh & dạy'],
     ['☆', '/tutor?tab=reviews', 'Đánh giá'],
   ];
   const customerLinks = [
     ['▦', '/customer', 'Tổng quan'],
     ['⌕', '/customer?tab=request', 'Đăng ký tìm gia sư'],
-    ['♙', '/customer?tab=students', 'Quản lý học viên'],
-    ['✓', '/customer?tab=confirmations', 'Xác nhận gia sư'],
     ['▰', '/customer?tab=classes', 'Lớp đang học'],
-    ['▱', '/customer?tab=tutors', 'Thông tin gia sư'],
-    ['$', '/customer?tab=payments', 'Học phí'],
-    ['☆', '/customer?tab=reviews', 'Đánh giá gia sư'],
   ];
 
   const links = role === 'tutor'
     ? tutorLinks
-    : role === 'student' || role === 'parent'
+    : role === 'student'
       ? customerLinks
       : role === 'staff'
         ? staffLinks
@@ -107,7 +103,7 @@ function Navigation({ onLogout }) {
   return (
     <aside className="navigation admin-sidebar">
       <div className="nav-brand">
-        <h1>{role === 'staff' ? 'Nhân viên Panel' : role === 'tutor' ? 'Gia sư Panel' : role === 'student' || role === 'parent' ? 'Phụ huynh Panel' : 'Admin Panel'}</h1>
+        <h1>{role === 'staff' ? 'Nhân viên Panel' : role === 'tutor' ? 'Gia sư Panel' : role === 'student' ? 'Học viên Panel' : 'Admin Panel'}</h1>
         <p>Chào {account?.display_name || username}</p>
         <button className="nav-account-btn" type="button" onClick={() => setShowAccount(true)}>Xem tài khoản</button>
       </div>
@@ -125,7 +121,7 @@ function Navigation({ onLogout }) {
               if (role === 'tutor' && linkPath === '/tutor') {
                 return pathname === '/tutor' && (linkTab ? currentTab === linkTab : !currentTab) ? 'active' : '';
               }
-              if ((role === 'student' || role === 'parent') && linkPath === '/customer') {
+              if (role === 'student' && linkPath === '/customer') {
                 return pathname === '/customer' && (linkTab ? currentTab === linkTab : !currentTab) ? 'active' : '';
               }
               return pathname === href ? 'active' : '';

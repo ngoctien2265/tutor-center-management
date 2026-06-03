@@ -2,7 +2,6 @@ from django.contrib import admin
 from .models import (
     AbsenceRequest,
     ClassApplication,
-    Parent,
     RefundRequest,
     Student,
     TeachingLog,
@@ -29,18 +28,11 @@ class TutorAdmin(admin.ModelAdmin):
     ordering = ('-rating',)
 
 
-@admin.register(Parent)
-class ParentAdmin(admin.ModelAdmin):
-    list_display = ('full_name', 'phone', 'created_at')
-    list_filter = ('created_at',)
-    search_fields = ('full_name', 'phone')
-
-
 @admin.register(Student)
 class StudentAdmin(admin.ModelAdmin):
-    list_display = ('full_name', 'parent', 'grade_level', 'school_name', 'created_at')
+    list_display = ('full_name', 'parent_name', 'grade_level', 'school_name', 'created_at')
     list_filter = ('grade_level', 'created_at')
-    search_fields = ('full_name', 'school_name')
+    search_fields = ('full_name', 'school_name', 'parent_name', 'parent_phone')
 
 
 admin.site.register(TutorQualification)

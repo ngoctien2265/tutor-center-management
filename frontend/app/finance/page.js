@@ -1,10 +1,10 @@
 import AppShell from '../../src/components/AppShell';
-import Finance from '../../src/screens/Finance';
+import FinanceManagement from '../../src/screens/FinanceManagement';
 
 export default function FinancePage() {
   return (
     <AppShell>
-      <Finance />
+      <FinanceManagement />
     </AppShell>
   );
 }

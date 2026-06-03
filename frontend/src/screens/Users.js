@@ -18,11 +18,11 @@ const emptyForm = {
 };
 
 function roleText(role) {
-  return { staff: 'Nhân viên', tutor: 'Gia sư', parent: 'Phụ huynh' }[role] || role;
+  return { staff: 'Nhân viên', tutor: 'Gia sư', student: 'Học viên' }[role] || role;
 }
 
 function roleClass(role) {
-  return { staff: 'role-staff', tutor: 'role-tutor', parent: 'role-parent' }[role] || 'role-staff';
+  return { staff: 'role-staff', tutor: 'role-tutor', student: 'role-student' }[role] || 'role-staff';
 }
 
 function approvalText(status) {
@@ -58,7 +58,7 @@ function AccountModal({ mode, form, setForm, onClose, onSubmit }) {
           <label>Họ tên<input value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} placeholder="VD: Nguyễn Văn Nam" /></label>
           <label>Email<input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="VD: nam@gmail.com" /></label>
           <label>Số điện thoại<input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="VD: 0901234567" /></label>
-          <label>Vai trò<select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}><option value="staff">Nhân viên</option><option value="tutor">Gia sư</option><option value="parent">Phụ huynh</option></select></label>
+          <label>Vai trò<select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}><option value="staff">Nhân viên</option><option value="tutor">Gia sư</option><option value="student">Học viên</option></select></label>
           <label>Địa chỉ<input value={form.address || ''} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="VD: Quận 1, TP.HCM" /></label>
           <label>{editing ? 'Mật khẩu mới (bỏ trống nếu không đổi)' : 'Mật khẩu'}<input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Tối thiểu 6 ký tự" /></label>
         </div>
@@ -74,20 +74,31 @@ function AccountModal({ mode, form, setForm, onClose, onSubmit }) {
 function Users() {
   const [items, setItems] = useState([]);
   const [query, setQuery] = useState('');
+  const [roleFilter, setRoleFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [openActionsId, setOpenActionsId] = useState(null);
   const [modalMode, setModalMode] = useState(null);
   const [form, setForm] = useState(emptyForm);
 
   const reload = () => axios.get('/v1/admin/users', { params: { page: 1, page_size: 200 } })
-    .then((response) => setItems((response.data.data?.items || response.data.results || []).filter((u) => ['staff', 'tutor', 'parent'].includes(u.role))))
+    .then((response) => setItems((response.data.data?.items || response.data.results || []).filter((u) => ['staff', 'tutor', 'student'].includes(u.role))))
     .catch(() => toast.error('Không tải được danh sách tài khoản.'));
 
   useEffect(() => { reload(); }, []);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return items;
-    return items.filter((user) => `${user.display_name || user.full_name || user.username || ''} ${user.email || ''} ${roleText(user.role)}`.toLowerCase().includes(q));
-  }, [items, query]);
+    return items.filter((user) => {
+      const matchesQuery = !q || `${user.display_name || user.full_name || user.username || ''} ${user.email || ''} ${roleText(user.role)}`.toLowerCase().includes(q);
+      const matchesRole = roleFilter === 'all' || user.role === roleFilter;
+      const matchesStatus = statusFilter === 'all'
+        || (statusFilter === 'approved' && user.status === 'active')
+        || (statusFilter === 'pending' && user.status !== 'active')
+        || (statusFilter === 'active' && user.is_active)
+        || (statusFilter === 'locked' && !user.is_active);
+      return matchesQuery && matchesRole && matchesStatus;
+    });
+  }, [items, query, roleFilter, statusFilter]);
 
   const openAdd = () => {
     setForm(emptyForm);
@@ -188,8 +199,23 @@ function Users() {
           <button className="primary-button" onClick={openAdd}>+ Thêm tài khoản</button>
         </div>
 
-        <div className="search-box">
-          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Tìm kiếm theo tên hoặc email..." />
+        <div className="list-controls user-filter-controls">
+          <div className="search-box">
+            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Tìm kiếm theo tên hoặc email..." />
+          </div>
+          <select className="admin-select" value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
+            <option value="all">Tất cả vai trò</option>
+            <option value="staff">Nhân viên</option>
+            <option value="tutor">Gia sư</option>
+            <option value="student">Học viên</option>
+          </select>
+          <select className="admin-select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+            <option value="all">Tất cả trạng thái</option>
+            <option value="approved">Đã duyệt</option>
+            <option value="pending">Chờ duyệt</option>
+            <option value="active">Hoạt động</option>
+            <option value="locked">Đã khóa</option>
+          </select>
         </div>
 
         <table className="admin-table" style={{ marginTop: 20 }}>
@@ -207,12 +233,17 @@ function Users() {
                   <span className={`status-badge ${user.is_active ? 'active' : 'locked'}`} style={{ marginTop: 6 }}>{user.is_active ? 'Hoạt động' : 'Đã khóa'}</span>
                 </td>
                 <td>{user.date_joined ? new Date(user.date_joined).toLocaleDateString('vi-VN') : '-'}</td>
-                <td className="action-buttons">
-                  <button className="icon-button primary" title="Xem/Sửa" onClick={() => openEdit(user)}>✎</button>
-                  <button className="icon-button success" title="Duyệt tài khoản" onClick={() => approveAccount(user)}>✓</button>
-                  <button className="icon-button danger" title="Không duyệt / hủy duyệt" onClick={() => rejectAccount(user)}>×</button>
-                  <button className={`icon-button ${user.is_active ? 'success' : 'danger'}`} title={user.is_active ? 'Đang hoạt động - bấm để khóa đăng nhập' : 'Đã khóa - bấm để mở đăng nhập'} onClick={() => toggleAccount(user)}>{user.is_active ? '▢' : '▣'}</button>
-                  {user.role !== 'admin' && <button className="icon-button danger" title="Xóa tài khoản" onClick={() => deleteAccount(user)}>🗑</button>}
+                <td className="action-buttons more-actions-cell">
+                  <button className="icon-button" title="Thêm thao tác" onClick={() => setOpenActionsId(openActionsId === user.id ? null : user.id)}>⋯</button>
+                  {openActionsId === user.id && (
+                    <div className="more-actions-menu">
+                      <button onClick={() => { openEdit(user); setOpenActionsId(null); }}>Xem / sửa</button>
+                      <button onClick={() => { approveAccount(user); setOpenActionsId(null); }}>Duyệt tài khoản</button>
+                      <button onClick={() => { rejectAccount(user); setOpenActionsId(null); }}>Không duyệt / hủy duyệt</button>
+                      <button onClick={() => { toggleAccount(user); setOpenActionsId(null); }}>{user.is_active ? 'Khóa đăng nhập' : 'Mở đăng nhập'}</button>
+                      {user.role !== 'admin' && <button className="danger" onClick={() => { deleteAccount(user); setOpenActionsId(null); }}>Xóa tài khoản</button>}
+                    </div>
+                  )}
                 </td>
               </tr>
             ))}

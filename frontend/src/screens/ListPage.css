@@ -129,7 +129,7 @@
 .role-admin { background: #fee2e2; color: #dc2626; }
 .role-staff { background: #dbeafe; color: #2563eb; }
 .role-tutor { background: #dcfce7; color: #15803d; }
-.role-parent { background: #f3e8ff; color: #7e22ce; }
+.role-student { background: #f3e8ff; color: #7e22ce; }
 
 .action-buttons {
   display: flex;
@@ -351,4 +351,55 @@ td .button:hover { background: #f8fafc; }
 .icon-button.primary:hover {
   background: #eff6ff;
   border-color: #bfdbfe;
+}
+
+.user-filter-controls {
+  justify-content: flex-start;
+}
+
+.user-filter-controls .admin-select {
+  flex: 0 0 180px;
+}
+
+.more-actions-cell {
+  position: relative;
+}
+
+.more-actions-menu {
+  position: absolute;
+  top: calc(100% - 8px);
+  right: 16px;
+  z-index: 30;
+  display: grid;
+  min-width: 210px;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.14);
+}
+
+.more-actions-menu button {
+  width: 100%;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 0;
+  border-bottom: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #0f172a;
+  text-align: left;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.more-actions-menu button:last-child {
+  border-bottom: 0;
+}
+
+.more-actions-menu button:hover {
+  background: #f8fafc;
+}
+
+.more-actions-menu button.danger {
+  color: #dc2626;
 }

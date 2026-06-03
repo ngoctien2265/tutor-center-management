@@ -1,15 +1,13 @@
 from django.db import models
 
 from ..choices import GENDER_CHOICES, STUDENT_GRADE_CHOICES
-from .parent import Parent
 from .user import User
 
 
 class Student(models.Model):
     GRADE_CHOICES = STUDENT_GRADE_CHOICES
 
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='student_profile', blank=True, null=True)
-    parent = models.ForeignKey(Parent, on_delete=models.CASCADE, related_name='students')
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='student_profile')
     full_name = models.CharField(max_length=255)
     gender = models.CharField(
         max_length=10,
@@ -20,6 +18,13 @@ class Student(models.Model):
     birthday = models.DateField(blank=True, null=True)
     grade_level = models.CharField(max_length=10, choices=STUDENT_GRADE_CHOICES, blank=True, null=True)
     school_name = models.CharField(max_length=255, blank=True, null=True)
+
+    # Parent information (merged from Parent model)
+    parent_name = models.CharField(max_length=255, blank=True, null=True)
+    parent_phone = models.CharField(max_length=20, blank=True, null=True)
+    parent_email = models.EmailField(blank=True, null=True)
+    address = models.TextField(blank=True, null=True)
+
     note = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -27,7 +32,8 @@ class Student(models.Model):
     class Meta:
         ordering = ['-created_at']
         indexes = [
-            models.Index(fields=['parent', 'grade_level']),
+            models.Index(fields=['grade_level']),
+            models.Index(fields=['parent_phone']),
         ]
 
     def __str__(self):

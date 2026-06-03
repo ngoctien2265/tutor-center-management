@@ -98,7 +98,7 @@ function Enrollments() {
                 <tr key={enrollment.id}>
                   <td>{enrollment.id}</td>
                   <td>{enrollment.student_id?.full_name || '-'}</td>
-                  <td>{enrollment.parent_id?.full_name || '-'}</td>
+                  <td>{enrollment.student_id?.parent_name || enrollment.student_id?.full_name || '-'}</td>
                   <td>{enrollment.class_id?.subject_name || '-'}</td>
                   <td>{enrollment.status}</td>
                   <td>{new Date(enrollment.enrolled_at).toLocaleDateString('vi-VN')}</td>

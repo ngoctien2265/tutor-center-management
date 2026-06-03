@@ -254,11 +254,13 @@ class ActiveClassSerializer(OpenClassSerializer):
         return ''
     def get_parentName(self, obj):
         e = self._enrollment(obj)
-        return e.parent_id.full_name if e else ''
+        if e and e.student_id:
+            return e.student_id.parent_name or ''
+        return ''
     def get_parentPhone(self, obj):
         e = self._enrollment(obj)
-        if e and e.parent_id:
-            return e.parent_id.phone or (e.parent_id.user.phone if e.parent_id.user else '') or ''
+        if e and e.student_id:
+            return e.student_id.parent_phone or ''
         return ''
     def get_nextSession(self, obj):
         slot = self.get_schedule(obj)[0] if self.get_schedule(obj) else {}

@@ -1,7 +1,7 @@
 from django.db import transaction
 from rest_framework import serializers
 
-from ..models import Parent, Student, Tutor, User
+from ..models import Student, Tutor, User
 
 
 class BaseRegisterSerializer(serializers.Serializer):
@@ -83,6 +83,7 @@ class StaffRegisterSerializer(BaseRegisterSerializer):
 class StudentRegisterSerializer(BaseRegisterSerializer):
     parentFullName = serializers.CharField(max_length=255, required=False, allow_blank=True)
     parentPhone = serializers.CharField(max_length=20, required=False, allow_blank=True, allow_null=True)
+    parentEmail = serializers.EmailField(required=False, allow_blank=True, allow_null=True)
     address = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     fullName = serializers.CharField(max_length=255)
     gender = serializers.CharField(max_length=10, required=False, allow_blank=True, allow_null=True)
@@ -95,7 +96,9 @@ class StudentRegisterSerializer(BaseRegisterSerializer):
     def create(self, validated_data):
         parent_full_name = validated_data.pop('parentFullName', '') or validated_data.get('fullName')
         parent_phone = validated_data.pop('parentPhone', None) or validated_data.get('phone')
+        parent_email = validated_data.pop('parentEmail', None) or validated_data.get('email')
         address = validated_data.pop('address', None) or None
+
         student_data = {
             'full_name': validated_data.pop('fullName'),
             'gender': validated_data.pop('gender', None) or None,
@@ -103,21 +106,24 @@ class StudentRegisterSerializer(BaseRegisterSerializer):
             'grade_level': validated_data.pop('gradeLevel', None) or None,
             'school_name': validated_data.pop('schoolName', None) or None,
             'note': validated_data.pop('note', None) or None,
+            'parent_name': parent_full_name,
+            'parent_phone': parent_phone,
+            'parent_email': parent_email,
+            'address': address,
         }
-        user = self.create_user(validated_data, 'parent')
+
+        user = self.create_user(validated_data, 'student')
         user.status = 'inactive'
         user.is_active = True
         user.save(update_fields=['status', 'is_active'])
-        parent = Parent.objects.create(user=user, full_name=parent_full_name, phone=parent_phone, address=address)
-        student = Student.objects.create(user=user, parent=parent, **student_data)
-        return {'user': user, 'parent': parent, 'student': student}
+
+        student = Student.objects.create(user=user, **student_data)
+        return {'user': user, 'student': student}
 
     def to_representation(self, instance):
         user = instance['user']
-        parent = instance['parent']
         student = instance['student']
         return {
             'user': {'id': user.id, 'username': user.username, 'email': user.email, 'role': user.role},
-            'parent': {'id': parent.id, 'fullName': parent.full_name},
             'student': {'id': student.id, 'fullName': student.full_name, 'gradeLevel': student.grade_level},
         }

@@ -13,7 +13,6 @@ from .tutor import (
     TutorReviewSerializer,
     parse_schedule_text,
 )
-from .parent import ParentSerializer
 from .student import StudentSerializer, StudentCreateUpdateSerializer
 from .register import StaffRegisterSerializer, StudentRegisterSerializer, TutorRegisterSerializer
 
@@ -21,7 +20,6 @@ __all__ = [
     'UserSerializer',
     'UserCreateSerializer',
     'TutorSerializer',
-    'ParentSerializer',
     'StudentSerializer',
     'StudentCreateUpdateSerializer',
     'TutorProfileSerializer',

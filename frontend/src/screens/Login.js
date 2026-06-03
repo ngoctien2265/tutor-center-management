@@ -10,7 +10,7 @@ import './Login.css';
 function homeRouteForRole(role) {
   if (role === 'tutor') return '/tutor';
   if (role === 'staff') return '/staff';
-  if (role === 'parent' || role === 'student') return '/customer';
+  if (role === 'student') return '/customer';
   return '/dashboard';
 }
 
@@ -53,7 +53,7 @@ function Login({ onLoginSuccess }) {
         onLoginSuccess();
         router.push(homeRouteForRole(me.data.role));
       } catch (profileError) {
-        const fallbackRole = username.startsWith('tutor') ? 'tutor' : username.startsWith('staff') ? 'staff' : username.startsWith('parent') ? 'parent' : 'admin';
+        const fallbackRole = username.startsWith('tutor') ? 'tutor' : username.startsWith('staff') ? 'staff' : username.startsWith('student') ? 'student' : 'admin';
         localStorage.setItem('role', fallbackRole);
         toast.success('Đăng nhập thành công!');
         onLoginSuccess();
@@ -127,7 +127,7 @@ function Login({ onLoginSuccess }) {
           <br />
           <strong>Nhân viên:</strong> staff / staff123
           <br />
-          <strong>Phụ huynh:</strong> parent / parent123
+          <strong>Học viên:</strong> student1 / student123
         </p>
       </div>
     </div>

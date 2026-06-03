@@ -103,6 +103,67 @@ class TutorService:
             )
 
     @staticmethod
+    def _parse_hhmm(value):
+        """Parse 'HH:MM' (or 'HH:MM:SS') -> số phút kể từ 00:00. Trả về None nếu sai format."""
+        if not value or not isinstance(value, str):
+            return None
+        parts = value.split(':')
+        if len(parts) < 2:
+            return None
+        try:
+            h, m = int(parts[0]), int(parts[1])
+        except (ValueError, TypeError):
+            return None
+        if h < 0 or h > 24 or m < 0 or m >= 60:
+            return None
+        return h * 60 + m
+
+    @staticmethod
+    def add_availability_slot(tutor, day, start, end):
+        """Thêm 1 khung giờ rảnh, tự động gộp nếu trùng/liền kề với slot đã có.
+        Trả về (slot, error_message). Nếu error_message != None thì slot=None.
+        """
+        if not day or day not in dict(TutorAvailability.DAYS):
+            return None, 'Vui lòng chọn thứ trong tuần.'
+        start_min = TutorService._parse_hhmm(start)
+        end_min = TutorService._parse_hhmm(end)
+        if start_min is None or end_min is None:
+            return None, 'Giờ bắt đầu / kết thúc không hợp lệ.'
+        if end_min <= start_min:
+            return None, 'Giờ kết thúc phải sau giờ bắt đầu.'
+        from datetime import time as dtime
+        start_t = dtime(start_min // 60, start_min % 60)
+        end_t = dtime(end_min // 60, end_min % 60)
+        existing = list(tutor.availability.filter(day_of_week=day).order_by('start_time'))
+        # Tìm slot chứa hoàn toàn [start,end] => không tạo mới
+        for slot in existing:
+            if slot.start_time <= start_t and slot.end_time >= end_t:
+                return slot, None
+        # Gộp với slot liền kề hoặc chồng lấn
+        merged_start = start_t
+        merged_end = end_t
+        to_remove = []
+        for slot in existing:
+            # Chồng lấn hoặc liền kề
+            if not (slot.end_time < merged_start or slot.start_time > merged_end):
+                if slot.start_time < merged_start:
+                    merged_start = slot.start_time
+                if slot.end_time > merged_end:
+                    merged_end = slot.end_time
+                to_remove.append(slot)
+        for slot in to_remove:
+            slot.delete()
+        return TutorAvailability.objects.create(
+            tutor=tutor, day_of_week=day,
+            start_time=merged_start, end_time=merged_end,
+        ), None
+
+    @staticmethod
+    def delete_availability_slot(tutor, slot_id):
+        deleted, _ = TutorAvailability.objects.filter(pk=slot_id, tutor=tutor).delete()
+        return bool(deleted)
+
+    @staticmethod
     def check_schedule_conflicts(tutor, day, start, end):
         conflicts = []
         for class_obj in Class.objects.filter(tutor=tutor, status__in=['assigned', 'waiting_tutor', 'teaching']):

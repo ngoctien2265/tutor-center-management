@@ -13,7 +13,7 @@ function getHomeRoute() {
   const role = typeof window !== 'undefined' ? localStorage.getItem('role') : null;
   if (role === 'tutor') return '/tutor';
   if (role === 'staff') return '/staff';
-  if (role === 'student' || role === 'parent') return '/customer';
+  if (role === 'student') return '/customer';
   return '/dashboard';
 }
 

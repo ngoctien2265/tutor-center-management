@@ -126,6 +126,98 @@ def availability(request):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
+def add_availability_slot(request):
+    """Thêm 1 khung giờ rảnh cho gia sư.
+    Body: { dayOfWeek, startTime, endTime }
+    """
+    tutor = tutor_of(request)
+    if not tutor:
+        return fail('Chỉ tài khoản gia sư mới sử dụng được API này.', status.HTTP_403_FORBIDDEN)
+    day = request.data.get('dayOfWeek')
+    start = request.data.get('startTime')
+    end = request.data.get('endTime')
+    slot, error = TutorService.add_availability_slot(tutor, day, start, end)
+    if error:
+        return fail(error, status.HTTP_400_BAD_REQUEST)
+    return ok(TutorAvailabilitySerializer(slot).data, 'Đã thêm khung giờ rảnh.', status.HTTP_201_CREATED)
+
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_availability_slot(request, slot_id):
+    """Xoá 1 khung giờ rảnh của gia sư."""
+    tutor = tutor_of(request)
+    if not tutor:
+        return fail('Chỉ tài khoản gia sư mới sử dụng được API này.', status.HTTP_403_FORBIDDEN)
+    deleted = TutorService.delete_availability_slot(tutor, slot_id)
+    if not deleted:
+        return fail('Không tìm thấy khung giờ rảnh.', status.HTTP_404_NOT_FOUND)
+    return ok(message='Đã xoá khung giờ rảnh.')
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def availability_with_timetable(request):
+    """Trả về đồng thời lịch rảnh + lịch dạy của gia sư để FE dựng ma trận tuần.
+    Mỗi ô của ma trận được xác định bởi (dayOfWeek, slotHour). slotHour là số giờ
+    nguyên (7-22) đại diện cho ô [slotHour:00 - slotHour+1:00).
+    """
+    tutor = tutor_of(request)
+    if not tutor:
+        return fail('Chỉ tài khoản gia sư mới sử dụng được API này.', status.HTTP_403_FORBIDDEN)
+    availability_items = TutorAvailabilitySerializer(tutor.availability.all(), many=True).data
+    timetable_items = TutorService.get_timetable(tutor)
+    # Tính sẵn map (dayOfWeek -> list of slotHour) cho FE render nhanh
+    availability_hour_map = {}
+    for item in availability_items:
+        day = item.get('dayOfWeek')
+        start = item.get('startTime', '')
+        end = item.get('endTime', '')
+        if not day or not start or not end:
+            continue
+        try:
+            start_h = int(start.split(':')[0])
+            end_h = int(end.split(':')[0])
+            if end_h <= start_h:
+                continue
+            for h in range(start_h, end_h):
+                availability_hour_map.setdefault(day, []).append(h)
+        except (ValueError, IndexError):
+            continue
+    # Tính map lớp đang dạy theo khung giờ
+    class_hour_map = {}
+    for item in timetable_items:
+        day = item.get('dayOfWeek')
+        start = item.get('startTime', '')
+        end = item.get('endTime', '')
+        if not day or not start or not end:
+            continue
+        try:
+            start_h = int(start.split(':')[0])
+            end_h = int(end.split(':')[0])
+            if end_h <= start_h:
+                continue
+            for h in range(start_h, end_h):
+                class_hour_map.setdefault(day, []).append({
+                    'slotHour': h,
+                    'classId': item.get('classId'),
+                    'subject': item.get('subject'),
+                    'startTime': start,
+                    'endTime': end,
+                    'status': item.get('status'),
+                })
+        except (ValueError, IndexError):
+            continue
+    return ok({
+        'availability': availability_items,
+        'timetable': timetable_items,
+        'availabilityHourMap': availability_hour_map,
+        'classHourMap': class_hour_map,
+    })
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def check_conflict(request):
     tutor = tutor_of(request)
     if not tutor:

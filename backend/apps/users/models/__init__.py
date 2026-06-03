@@ -8,13 +8,11 @@ from .tutor import (
     AbsenceRequest,
     RefundRequest,
 )
-from .parent import Parent
 from .student import Student
 
 __all__ = [
     'User',
     'Tutor',
-    'Parent',
     'Student',
     'TutorQualification',
     'TutorAvailability',

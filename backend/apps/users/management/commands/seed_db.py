@@ -10,7 +10,6 @@ from apps.finance.models import Enrollment, Transaction
 from apps.users.models import (
     AbsenceRequest,
     ClassApplication,
-    Parent,
     RefundRequest,
     Student,
     TeachingLog,
@@ -41,7 +40,6 @@ class Command(BaseCommand):
             TutorQualification.objects.all().delete()
             Class.objects.all().delete()
             Student.objects.all().delete()
-            Parent.objects.all().delete()
             Tutor.objects.all().delete()
             User.objects.all().delete()
 
@@ -120,20 +118,22 @@ class Command(BaseCommand):
             TutorAvailability(tutor=tutor2, day_of_week='THURSDAY', start_time='18:00', end_time='20:00'),
         ])
 
-        parent_user1 = User.objects.create_user(
-            username='parent', email='pham.thi.mai@gmail.com', password='parent123',
-            role='parent', phone='0903000001', status='active', first_name='Phạm Thị Mai'
+        student_user1 = User.objects.create_user(
+            username='student1', email='pham.thi.mai@gmail.com', password='student123',
+            role='student', phone='0903000001', status='active', first_name='Nguyễn Văn An'
         )
-        parent1 = Parent.objects.create(user=parent_user1, full_name='Phạm Thị Mai', phone='0903000001', address='Quận Bình Thạnh, TP.HCM')
-        parent_user2 = User.objects.create_user(
-            username='parent_2', email='nguyen.van.binh@gmail.com', password='parent123',
-            role='parent', phone='0903000002', status='inactive', is_active=True, first_name='Nguyễn Văn Bình'
+        student_user2 = User.objects.create_user(
+            username='student2', email='nguyen.van.binh@gmail.com', password='student123',
+            role='student', phone='0903000002', status='active', first_name='Nguyễn Thị Bình'
         )
-        parent2 = Parent.objects.create(user=parent_user2, full_name='Nguyễn Văn Bình', phone='0903000002', address='TP. Thủ Đức, TP.HCM')
+        student_user3 = User.objects.create_user(
+            username='student3', email='le.minh.khang@gmail.com', password='student123',
+            role='student', phone='0903000003', status='active', first_name='Lê Minh Khang'
+        )
 
-        student1 = Student.objects.create(parent=parent1, full_name='Nguyễn Văn An', gender='M', birthday=date(2009, 3, 15), grade_level='G10', school_name='THPT Gia Định', note='Cần củng cố Toán và luyện bài tập theo chương trình trên lớp.')
-        student2 = Student.objects.create(parent=parent1, full_name='Nguyễn Thị Bình', gender='F', birthday=date(2008, 7, 8), grade_level='G11', school_name='THPT Trưng Vương', note='Cần hỗ trợ Vật lý nâng cao.')
-        student3 = Student.objects.create(parent=parent2, full_name='Lê Minh Khang', gender='M', birthday=date(2007, 11, 1), grade_level='G12', school_name='THPT Nguyễn Thượng Hiền', note='Ôn thi tốt nghiệp môn Hóa học.')
+        student1 = Student.objects.create(user=student_user1, full_name='Nguyễn Văn An', gender='M', birthday=date(2009, 3, 15), grade_level='G10', school_name='THPT Gia Định', note='Cần củng cố Toán và luyện bài tập theo chương trình trên lớp.', parent_name='Phạm Thị Mai', parent_phone='0903000001', parent_email='pham.thi.mai@gmail.com')
+        student2 = Student.objects.create(user=student_user2, full_name='Nguyễn Thị Bình', gender='F', birthday=date(2008, 7, 8), grade_level='G11', school_name='THPT Trưng Vương', note='Cần hỗ trợ Vật lý nâng cao.', parent_name='Phạm Thị Mai', parent_phone='0903000001', parent_email='pham.thi.mai@gmail.com')
+        student3 = Student.objects.create(user=student_user3, full_name='Lê Minh Khang', gender='M', birthday=date(2007, 11, 1), grade_level='G12', school_name='THPT Nguyễn Thượng Hiền', note='Ôn thi tốt nghiệp môn Hóa học.', parent_name='Nguyễn Văn Bình', parent_phone='0903000002', parent_email='nguyen.van.binh@gmail.com')
 
         cls1 = Class.objects.create(
             tutor=tutor1, created_by=staff1, subject_name='Toán lớp 10', grade_level='Lớp 10',
@@ -173,22 +173,22 @@ class Command(BaseCommand):
         )
 
         enrollments = [
-            Enrollment.objects.create(class_id=cls1, student_id=student1, parent_id=parent1, status='active'),
-            Enrollment.objects.create(class_id=cls2, student_id=student2, parent_id=parent1, status='active'),
-            Enrollment.objects.create(class_id=cls3, student_id=student3, parent_id=parent2, status='unpaid'),
-            Enrollment.objects.create(class_id=cls4, student_id=student3, parent_id=parent2, status='unpaid'),
-            Enrollment.objects.create(class_id=cls5, student_id=student3, parent_id=parent2, status='completed'),
-            Enrollment.objects.create(class_id=cls6, student_id=student2, parent_id=parent1, status='unpaid'),
+            Enrollment.objects.create(class_id=cls1, student_id=student1, status='active'),
+            Enrollment.objects.create(class_id=cls2, student_id=student2, status='active'),
+            Enrollment.objects.create(class_id=cls3, student_id=student3, status='unpaid'),
+            Enrollment.objects.create(class_id=cls4, student_id=student3, status='unpaid'),
+            Enrollment.objects.create(class_id=cls5, student_id=student3, status='completed'),
+            Enrollment.objects.create(class_id=cls6, student_id=student2, status='unpaid'),
         ]
 
         payment_rows = [
-            (parent1.user, enrollments[0], cls1.tuition_fee, 'tuition_fee', 'success'),
-            (parent1.user, enrollments[1], cls2.tuition_fee, 'tuition_fee', 'pending'),
-            (parent2.user, enrollments[2], cls3.tuition_fee, 'tuition_fee', 'pending'),
-            (parent2.user, enrollments[4], cls5.tuition_fee, 'tuition_fee', 'success'),
-            (parent1.user, enrollments[5], cls6.tuition_fee, 'tuition_fee', 'pending'),
-            (parent1.user, enrollments[0], Decimal('1200000'), 'commission', 'success'),
-            (parent2.user, enrollments[4], Decimal('900000'), 'commission', 'success'),
+            (student_user1, enrollments[0], cls1.tuition_fee, 'tuition_fee', 'success'),
+            (student_user2, enrollments[1], cls2.tuition_fee, 'tuition_fee', 'pending'),
+            (student_user3, enrollments[2], cls3.tuition_fee, 'tuition_fee', 'pending'),
+            (student_user3, enrollments[4], cls5.tuition_fee, 'tuition_fee', 'success'),
+            (student_user2, enrollments[5], cls6.tuition_fee, 'tuition_fee', 'pending'),
+            (student_user1, enrollments[0], Decimal('1200000'), 'commission', 'success'),
+            (student_user3, enrollments[4], Decimal('900000'), 'commission', 'success'),
             (tutor1.user, enrollments[0], cls1.salary_per_month, 'tutor_salary', 'success'),
             (tutor2.user, enrollments[1], cls2.salary_per_month, 'tutor_salary', 'pending'),
             (tutor1.user, enrollments[4], cls5.salary_per_month, 'tutor_salary', 'success'),
@@ -216,14 +216,14 @@ class Command(BaseCommand):
         ClassApplication.objects.create(tutor=tutor2, class_obj=cls3, cover_note='Em có kinh nghiệm dạy Hóa và Vật lý THPT.', expected_salary=Decimal('2400000'), available_schedule_note='Tối thứ 7', status='PENDING')
         ClassApplication.objects.create(tutor=tutor2, class_obj=cls6, cover_note='Nhân viên đã gửi gia sư này cho phụ huynh xác nhận.', expected_salary=Decimal('2200000'), available_schedule_note='Tối thứ 6', status='APPROVED', reviewed_at=timezone.now())
 
-        Review.objects.create(class_id=cls1, user_id=parent1.user, star_rating=5, comment='Gia sư dạy dễ hiểu, học viên tiến bộ rõ rệt.')
-        Review.objects.create(class_id=cls2, user_id=parent1.user, star_rating=4, comment='Gia sư nhiệt tình, cần tăng thêm bài tập nâng cao.')
-        Review.objects.create(class_id=cls5, user_id=parent2.user, star_rating=5, comment='Khóa học hoàn thành đúng tiến độ, phụ huynh hài lòng.')
+        Review.objects.create(class_id=cls1, user_id=student_user1, star_rating=5, comment='Gia sư dạy dễ hiểu, học viên tiến bộ rõ rệt.')
+        Review.objects.create(class_id=cls2, user_id=student_user2, star_rating=4, comment='Gia sư nhiệt tình, cần tăng thêm bài tập nâng cao.')
+        Review.objects.create(class_id=cls5, user_id=student_user3, star_rating=5, comment='Khóa học hoàn thành đúng tiến độ, phụ huynh hài lòng.')
 
         self.stdout.write(self.style.SUCCESS('Database seeding completed!'))
         self.stdout.write(self.style.SUCCESS('Demo accounts:'))
         self.stdout.write(self.style.SUCCESS('  admin / admin123'))
         self.stdout.write(self.style.SUCCESS('  staff / staff123'))
         self.stdout.write(self.style.SUCCESS('  tutor_1 / tutor123'))
-        self.stdout.write(self.style.SUCCESS('  parent / parent123'))
-        self.stdout.write(self.style.SUCCESS('Created: 1 admin, 2 staff, 2 tutors, 2 parents, 3 students, 6 classes.'))
+        self.stdout.write(self.style.SUCCESS('  student1 / student123'))
+        self.stdout.write(self.style.SUCCESS('Created: 1 admin, 2 staff, 2 tutors, 3 students, 6 classes.'))

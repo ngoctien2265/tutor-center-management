@@ -308,7 +308,7 @@ def students(request):
     guard = require_staff(request)
     if guard:
         return guard
-    qs = Student.objects.select_related('user', 'parent')
+    qs = Student.objects.select_related('user')
     if request.GET.get('search'):
         qs = qs.filter(full_name__icontains=request.GET['search'])
     return ok(paginate(request, qs, StudentSerializer))
@@ -385,7 +385,9 @@ def _ensure_enrollment_transaction(enrollment):
     tx = Transaction.objects.filter(enrollment_id=enrollment, type='tuition_fee').order_by('-created_at').first()
     if tx:
         return tx
-    user = enrollment.parent_id.user if enrollment.parent_id and enrollment.parent_id.user else None
+    # After Parent removal: parent info is now stored on the student.
+    # Use the student's user account to create the tuition fee transaction.
+    user = enrollment.student_id.user if enrollment.student_id and enrollment.student_id.user else None
     if not user:
         return None
     return Transaction.objects.create(
@@ -435,15 +437,19 @@ def finance(request):
     guard = require_staff(request)
     if guard:
         return guard
-    enrollments = Enrollment.objects.select_related('class_id', 'student_id', 'parent_id', 'parent_id__user')
+    enrollments = Enrollment.objects.select_related('class_id', 'student_id', 'student_id__user')
     payment_rows = []
     for enrollment in enrollments[:100]:
         tx = _ensure_enrollment_transaction(enrollment)
+        # After Parent removal: parent info is now on the student.
+        # Use the student's parent_name as the payer label, fallback to the student's full name.
+        student = enrollment.student_id
+        parent_label = (student.parent_name if student else '') or (student.full_name if student else '') or 'Phụ huynh'
         payment_rows.append({
             'id': tx.id if tx else enrollment.id,
             'transactionId': tx.id if tx else None,
             'enrollmentId': enrollment.id,
-            'parent': enrollment.parent_id.full_name if enrollment.parent_id else '',
+            'parent': parent_label,
             'className': enrollment.class_id.subject_name,
             'amount': tx.amount if tx else _enrollment_amount(enrollment),
             'date': (tx.updated_at if tx else enrollment.updated_at).date().isoformat(),

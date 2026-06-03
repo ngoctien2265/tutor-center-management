@@ -31,9 +31,6 @@ admin_urlpatterns = [
     path('users', admin_views.create_user),
     path('users/<int:user_id>', admin_views.update_user),
     path('users/<int:user_id>/delete', admin_views.delete_user),
-    path('parents', admin_views.parents),
-    path('parents/<int:parent_id>/verify', admin_views.verify_parent),
-    path('parents/<int:parent_id>/unverify', admin_views.unverify_parent),
 ]
 
 
@@ -87,6 +84,9 @@ tutor_urlpatterns = [
     path('qualifications', tutor_views.qualifications),
     path('qualifications/<int:document_id>', tutor_views.qualification_detail),
     path('availability', tutor_views.availability),
+    path('availability/single', tutor_views.add_availability_slot),
+    path('availability/<int:slot_id>', tutor_views.delete_availability_slot),
+    path('availability/with-timetable', tutor_views.availability_with_timetable),
     path('availability/check-conflict', tutor_views.check_conflict),
     path('classes/open', tutor_views.open_classes),
     path('classes/open/<int:class_id>', tutor_views.open_class_detail),
