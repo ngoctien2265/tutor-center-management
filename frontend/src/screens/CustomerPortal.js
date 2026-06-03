@@ -78,16 +78,21 @@ function ParentPortal() {
   const timetableWeekDays = useMemo(() => buildWeekDays(timetableWeekStart), [timetableWeekStart]);
   const timetableSessions = useMemo(() => learningClasses.flatMap((cls) => {
     if (['Hoàn thành', 'Đã hủy'].includes(cls.status)) return [];
+    const confirmedLogMap = new Set((cls.confirmedTeachingLogs || []).map((log) => `${log.sessionDate || log.session_date}-${String(log.startTime || log.start_time || '').slice(0, 5)}`));
     const slots = parseScheduleSlots({ schedule: cls.scheduleSlots, scheduleDetail: cls.scheduleDetail });
-    return buildClassSessions(cls, slots).map((session) => ({
-      ...session,
-      classId: cls.id,
-      classTitle: cls.title,
-      student: cls.student,
-      tutor: cls.tutor,
-      location: cls.location,
-      status: cls.status,
-    }));
+    return buildClassSessions(cls, slots).map((session) => {
+      const startTime = timeFromMinutes(session.start);
+      return {
+        ...session,
+        classId: cls.id,
+        classTitle: cls.title,
+        student: cls.student,
+        tutor: cls.tutor,
+        location: cls.location,
+        status: cls.status,
+        isConfirmed: confirmedLogMap.has(`${session.dateKey}-${startTime}`),
+      };
+    });
   }), [learningClasses]);
 
   // Helper to compute date for a given day label based on startDate
@@ -338,12 +343,14 @@ function StudentTimetable({ weekStart, setWeekStart, weekDays, sessions, onViewC
             const currentStart = hour * 60;
             const currentEnd = (hour + 1) * 60;
             const cellSessions = sessions.filter((item) => item.dateKey === day.dateKey && item.start < currentEnd && item.end > currentStart);
-            return <div key={`${day.code}-${hour}`} className={cellSessions.length ? 'timetable-cell state-class weekly-class-cell' : 'timetable-cell state-empty'}>
+            const confirmed = cellSessions.some((session) => session.isConfirmed);
+            return <div key={`${day.code}-${hour}`} className={cellSessions.length ? `timetable-cell state-class weekly-class-cell ${confirmed ? 'is-confirmed-session' : ''}` : 'timetable-cell state-empty'}>
               {cellSessions.map((session) => <button key={`${session.classId}-${session.sessionNumber}-${hour}`} type="button" className="cell-class-label timetable-session-button" onClick={() => onViewClass(session.classId)}>
                 <strong>{session.classTitle}</strong>
                 <small>Buổi {session.sessionNumber}: {timeFromMinutes(session.start)}-{timeFromMinutes(session.end)}</small>
                 <small>{session.student} · {session.tutor}</small>
                 <small>{session.location}</small>
+                {session.isConfirmed && <em>Đã được staff duyệt</em>}
               </button>)}
             </div>;
           })}

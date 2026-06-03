@@ -174,26 +174,47 @@ function StaffPortal() {
   })), [applications]);
 
   const sessionRows = useMemo(() => {
-    const logRows = sessions.map((row) => ({
-      id: row.id || row.logId,
-      type: 'log',
-      className: row.className || row.class_name || row.subject || 'Lớp học',
-      tutor: row.tutor || row.tutorName || 'Gia sư',
-      date: row.date || row.sessionDate,
-      status: String(row.status || '').includes('Đã duyệt') ? 'CONFIRMED' : 'TAUGHT',
-      note: row.topic || row.note || '',
-    }));
+    const logRows = sessions.map((row) => {
+      const topic = row.topic || row.sessionLabel || row.title || 'Đã dạy';
+      const match = String(topic).match(/buổi\s*(\d+)/i);
+      const rawNote = row.note || row.comment || row.sessionComment || row.classComment || row.review || '';
+      const content = row.content || row.lessonContent || row.studyContent || row.description || row.homework || '';
+      return {
+        id: row.id || row.logId,
+        classId: row.classId,
+        type: 'log',
+        className: row.className || row.class_name || row.subject || 'Lớp học',
+        tutor: row.tutor || row.tutorName || 'Gia sư',
+        date: row.date || row.sessionDate,
+        time: row.startTime && row.endTime ? `${row.startTime} - ${row.endTime}` : '',
+        sessionLabel: match ? `Buổi ${match[1]}` : topic,
+        status: String(row.status || '').includes('Đã duyệt') || rawNote.includes('Staff xác nhận') ? 'CONFIRMED' : 'TAUGHT',
+        content,
+        note: rawNote.replace(/\n?Staff xác nhận buổi học\.?/g, '').replace(/^Buổi\s*\d+\s*:\s*/i, '').trim(),
+      };
+    });
     const absenceRows = absenceRequests.map((row) => ({
       id: row.requestId || row.id,
+      classId: row.classId,
       type: 'absence',
       className: row.subject || row.className || 'Lớp học',
       tutor: row.tutorName || row.tutor?.full_name || row.tutor?.fullName || 'Gia sư',
       date: row.sessionDate || row.session_date,
       status: row.status === 'APPROVED' ? 'CONFIRMED' : (row.requestType === 'RESCHEDULE' || row.requestType === 'ABSENCE_WITH_MAKEUP' ? 'MAKEUP' : 'ABSENCE'),
+      time: '',
+      sessionLabel: row.requestType === 'RESCHEDULE' || row.requestType === 'ABSENCE_WITH_MAKEUP' ? 'Dạy bù' : 'Xin nghỉ',
+      content: '',
       note: row.reason || row.note || '',
     }));
     return [...absenceRows, ...logRows].sort((a, b) => String(b.date).localeCompare(String(a.date))).slice(0, 100);
   }, [sessions, absenceRequests]);
+
+  const selectedClassSessionRows = useMemo(() => {
+    if (!selectedClass) return [];
+    const selectedId = Number(selectedClass.id || selectedClass.classId);
+    const selectedName = selectedClass.subject_name || selectedClass.subject || '';
+    return sessionRows.filter((row) => Number(row.classId) === selectedId || row.className === selectedName);
+  }, [selectedClass, sessionRows]);
 
   const paymentRows = useMemo(() => (finance.paymentRows || []).map((row) => ({
     id: row.transactionId || row.id,
@@ -318,11 +339,9 @@ function StaffPortal() {
       </section>
       <section className="staff-card wide" style={{ marginTop: '20px' }}>
         <h2>Buổi học & Yêu cầu nghỉ/dạy bù</h2>
-        <div className="table-shell"><table className="staff-table"><thead><tr><th>Gia sư</th><th>Ngày</th><th>Loại</th><th>Trạng thái</th><th>Ghi chú</th><th>Thao tác</th></tr></thead><tbody>
-          {sessionRows.filter((r) => r.className === (selectedClass.subject_name || '')).length === 0 && sessionRows.filter((r) => true).length > 0
-            ? sessionRows.map((row) => <tr key={`${row.type}-${row.id}`}><td>{row.tutor}</td><td>{row.date}</td><td>{row.type === 'absence' ? 'Yêu cầu nghỉ' : 'Buổi học'}</td><td><StatusBadge status={row.status} /></td><td>{row.note || '-'}</td><td className="staff-actions">{row.status === 'CONFIRMED' ? <span className="muted">Đã duyệt</span> : <><IconButton tone="green" title="Duyệt" onClick={() => confirmSession(row, 'APPROVED')}>✓</IconButton>{row.type === 'absence' && <IconButton tone="red" title="Từ chối" onClick={() => confirmSession(row, 'REJECTED')}>×</IconButton>}</>}</td></tr>)
-            : sessionRows.filter((r) => r.className === (selectedClass.subject_name || '')).map((row) => <tr key={`${row.type}-${row.id}`}><td>{row.tutor}</td><td>{row.date}</td><td>{row.type === 'absence' ? 'Yêu cầu nghỉ' : 'Buổi học'}</td><td><StatusBadge status={row.status} /></td><td>{row.note || '-'}</td><td className="staff-actions">{row.status === 'CONFIRMED' ? <span className="muted">Đã duyệt</span> : <><IconButton tone="green" title="Duyệt" onClick={() => confirmSession(row, 'APPROVED')}>✓</IconButton>{row.type === 'absence' && <IconButton tone="red" title="Từ chối" onClick={() => confirmSession(row, 'REJECTED')}>×</IconButton>}</>}</td></tr>)}
-          {sessionRows.length === 0 && <tr><td colSpan="6" className="muted">Chưa có dữ liệu buổi học.</td></tr>}
+        <div className="table-shell"><table className="staff-table"><thead><tr><th>Gia sư</th><th>Ngày</th><th>Giờ</th><th>Buổi / Yêu cầu</th><th>Nội dung học</th><th>Nhận xét / Ghi chú</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody>
+          {selectedClassSessionRows.map((row) => <tr key={`${row.type}-${row.id}`}><td>{row.tutor}</td><td>{row.date}</td><td>{row.time || '-'}</td><td>{row.sessionLabel}</td><td>{row.type === 'log' ? (row.content || '-') : '-'}</td><td>{row.note || '-'}</td><td><StatusBadge status={row.status} /></td><td className="staff-actions">{row.status === 'CONFIRMED' ? <span className="muted">Đã duyệt</span> : <><IconButton tone="green" title="Duyệt" onClick={() => confirmSession(row, 'APPROVED')}>✓</IconButton>{row.type === 'absence' && <IconButton tone="red" title="Từ chối" onClick={() => confirmSession(row, 'REJECTED')}>×</IconButton>}</>}</td></tr>)}
+          {selectedClassSessionRows.length === 0 && <tr><td colSpan="8" className="muted">Chưa có yêu cầu duyệt buổi học hoặc nghỉ/dạy bù của lớp này.</td></tr>}
         </tbody></table></div>
       </section>
     </>

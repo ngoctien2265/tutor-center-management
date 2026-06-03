@@ -425,8 +425,12 @@ def all_teaching_logs(request):
             'tutor': log.tutor.full_name,
             'date': log.session_date,
             'sessionDate': log.session_date,
+            'startTime': log.start_time.strftime('%H:%M') if log.start_time else '',
+            'endTime': log.end_time.strftime('%H:%M') if log.end_time else '',
             'status': display_status,
             'topic': log.topic,
+            'content': log.content,
+            'note': log.note,
         })
     return ok({'items': items, 'pagination': {'page': 1, 'limit': len(items), 'total': len(items)}})
 

@@ -243,6 +243,7 @@ export function mapCustomerClass(c) {
     location: c.location || '-',
     requirements: c.requirements || '-',
     notifications: c.absenceRequests || [],
+    confirmedTeachingLogs: c.confirmedTeachingLogs || [],
     sessionsPerWeek: c.sessionsPerWeek || 1,
     totalSessions: c.totalSessions || 0,
     startDate: c.startDate || c.start_date || '',

@@ -832,6 +832,7 @@
 .legend-chip.empty { background: #ffffff; }
 .legend-chip.available { background: #dcfce7; border-color: #86efac; }
 .legend-chip.class { background: #e0e7ff; border-color: #a5b4fc; }
+.legend-chip.confirmed { background: #dcfce7; border-color: #16a34a; }
 .legend-chip.dragging { background: #bfdbfe; border-color: #2563eb; }
 .timetable-matrix-card { padding: 0; overflow: hidden; }
 .timetable-grid-wrapper { overflow-x: auto; padding: 14px; }
@@ -887,6 +888,18 @@
   cursor: not-allowed;
 }
 .timetable-cell.state-class:hover { background: #c7d2fe; }
+.timetable-cell.state-class.is-confirmed-session {
+  background: #dcfce7;
+  border-color: #86efac;
+}
+.timetable-cell.state-class.is-confirmed-session:hover { background: #bbf7d0; }
+.timetable-cell.is-confirmed-session .cell-class-label {
+  color: #14532d;
+}
+.timetable-cell.is-confirmed-session .cell-class-label small,
+.timetable-cell.is-confirmed-session .cell-class-label em {
+  color: #166534;
+}
 .timetable-cell.is-dragging {
   background: #bfdbfe !important;
   outline: 2px solid #2563eb;
@@ -905,6 +918,27 @@
 }
 .cell-class-label strong { display: block; font-size: 12px; font-weight: 800; }
 .cell-class-label small { display: block; font-size: 11px; color: #475569; margin-top: 2px; }
+.timetable-cell.merged-class-cell {
+  align-items: stretch;
+  padding: 6px;
+  z-index: 3;
+}
+.timetable-cell.merged-class-cell .cell-class-label {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.45);
+}
+.cell-class-label em {
+  display: block;
+  margin-top: 4px;
+  color: #4f46e5;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 800;
+}
 .timetable-summary-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

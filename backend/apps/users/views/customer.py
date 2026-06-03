@@ -13,7 +13,7 @@ from apps.feedback.serializers import ReviewSerializer
 from apps.finance.models import Enrollment, Transaction
 from apps.finance.serializers import TransactionSerializer
 from apps.finance.services import TransactionService
-from apps.users.models import Student, AbsenceRequest
+from apps.users.models import Student, AbsenceRequest, TeachingLog
 from apps.users.serializers import StudentSerializer, StudentCreateUpdateSerializer, UserSerializer
 from apps.users.serializers.tutor import parse_schedule_text
 
@@ -97,6 +97,16 @@ def class_payload(enrollment):
         }
         for item in AbsenceRequest.objects.filter(class_obj=cls).order_by('-created_at')[:10]
     ]
+    confirmed_logs = [
+        {
+            'logId': item.id,
+            'sessionDate': item.session_date,
+            'startTime': item.start_time.strftime('%H:%M') if item.start_time else '',
+            'endTime': item.end_time.strftime('%H:%M') if item.end_time else '',
+            'status': 'CONFIRMED',
+        }
+        for item in TeachingLog.objects.filter(class_obj=cls, note__icontains='Staff xác nhận').order_by('-session_date', '-start_time')
+    ]
     return {
         'enrollmentId': enrollment.id,
         'classId': cls.id,
@@ -109,6 +119,7 @@ def class_payload(enrollment):
         'location': cls.address_teaching,
         'requirements': cls.requirements,
         'absenceRequests': absence_items,
+        'confirmedTeachingLogs': confirmed_logs,
         'status': cls.status.upper(),
         'enrollmentStatus': enrollment.status,
         'needsParentConfirmation': cls.status == 'waiting_parent' and bool(cls.tutor_id),
