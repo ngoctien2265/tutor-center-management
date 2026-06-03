@@ -6,33 +6,55 @@
   width: 100%;
   padding: 24px;
   background:
-    radial-gradient(circle at top left, rgba(232, 245, 238, 0.9), transparent 30rem),
-    linear-gradient(135deg, #f7f8f6 0%, #eef6f1 100%);
+    linear-gradient(90deg, rgba(216, 199, 176, 0.035) 1px, transparent 1px),
+    linear-gradient(rgba(216, 199, 176, 0.03) 1px, transparent 1px),
+    radial-gradient(circle at 15% 5%, rgba(201, 154, 74, 0.22), transparent 32rem),
+    var(--color-bg);
+  background-size: 42px 42px, 42px 42px, auto, auto;
 }
 
 .login-card {
-  background: white;
-  border: 1px solid #e6e8e5;
-  border-radius: 28px;
-  padding: 42px;
-  box-shadow: 0 24px 70px rgba(17, 24, 39, 0.1);
-  width: 100%;
-  max-width: 440px;
+  width: min(460px, 100%);
+  position: relative;
+  padding: 44px;
+  border: 2px solid var(--color-border);
+  border-radius: 0;
+  background: var(--color-surface);
+  box-shadow: none;
+  color: var(--color-text);
+}
+
+.login-card::before {
+  content: 'TUTOR CENTER';
+  position: absolute;
+  left: -18px;
+  top: -42px;
+  color: rgba(224, 183, 109, 0.2);
+  font-family: var(--font-heading);
+  font-size: 48px;
+  line-height: 0.85;
+  letter-spacing: -0.08em;
+  text-transform: uppercase;
+  transform: skew(-8deg) rotate(-2deg);
+  pointer-events: none;
 }
 
 .login-title {
+  margin: 0 0 12px;
+  color: var(--color-text);
   text-align: center;
-  margin-bottom: 10px;
-  color: #063d2b;
-  font-size: 28px;
-  font-weight: 850;
-  letter-spacing: -0.04em;
+  font-family: var(--font-heading);
+  font-size: 34px;
+  line-height: 0.95;
+  font-weight: 900;
+  letter-spacing: -0.07em;
+  text-transform: uppercase;
 }
 
 .login-subtitle {
+  margin: 0 0 32px;
+  color: var(--color-muted);
   text-align: center;
-  color: #6b7280;
-  margin-bottom: 32px;
   font-size: 15px;
 }
 
@@ -42,9 +64,9 @@
 
 .login-button {
   width: 100%;
-  padding: 13px 18px;
-  font-size: 16px;
+  min-height: 48px;
   margin-top: 8px;
+  font-size: 12px;
 }
 
 .login-register-links {
@@ -56,23 +78,42 @@
 }
 
 .login-register-links a {
-  color: #0f6b3f;
+  color: var(--color-accent-2);
   text-decoration: none;
-  font-size: 13px;
-  font-weight: 800;
+  font-family: var(--font-label);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.login-register-links a:hover {
+  color: var(--color-text);
 }
 
 .login-info {
-  background: #e8f5ee;
-  border: 1px solid rgba(15, 107, 63, 0.16);
-  border-radius: 18px;
-  padding: 16px;
-  font-size: 13px;
-  color: #0f6b3f;
   margin-top: 22px;
+  padding: 16px;
+  border: 1px solid rgba(201, 154, 74, 0.58);
+  border-radius: 0;
+  background: rgba(201, 154, 74, 0.12);
+  color: var(--color-muted);
+  font-size: 13px;
   line-height: 1.7;
 }
 
 .login-info strong {
-  color: #063d2b;
+  color: var(--color-accent-2);
+}
+
+@media (max-width: 560px) {
+  .login-card {
+    padding: 30px 24px;
+  }
+
+  .login-card::before {
+    font-size: 34px;
+    left: 0;
+    top: -30px;
+  }
 }

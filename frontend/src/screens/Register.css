@@ -3,8 +3,12 @@
   width: 100%;
   padding: 28px;
   background:
-    radial-gradient(circle at top right, rgba(232, 245, 238, 0.95), transparent 32rem),
-    #f5f6f4;
+    linear-gradient(90deg, rgba(216, 199, 176, 0.035) 1px, transparent 1px),
+    linear-gradient(rgba(216, 199, 176, 0.03) 1px, transparent 1px),
+    radial-gradient(circle at top right, rgba(201, 154, 74, 0.18), transparent 32rem),
+    var(--color-bg);
+  background-size: 42px 42px, 42px 42px, auto, auto;
+  color: var(--color-text);
 }
 
 .register-shell {
@@ -20,18 +24,23 @@
   margin-bottom: 24px;
 }
 
-.register-topbar a {
-  color: #0f6b3f;
-  font-weight: 800;
+.register-topbar a,
+.register-actions a {
+  color: var(--color-accent-2);
+  font-family: var(--font-label);
+  font-size: 12px;
+  font-weight: 900;
   text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 .register-card {
-  background: white;
-  border: 1px solid #e6e8e5;
-  border-radius: 32px;
-  padding: 30px;
-  box-shadow: 0 24px 70px rgba(17, 24, 39, 0.09);
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: 0;
+  padding: 32px;
+  box-shadow: none;
 }
 
 .register-heading {
@@ -41,38 +50,49 @@
 .register-heading span {
   display: inline-flex;
   width: max-content;
-  background: #e8f5ee;
-  color: #0f6b3f;
-  border-radius: 999px;
+  background: rgba(201, 154, 74, 0.16);
+  color: var(--color-accent-2);
+  border: 1px solid var(--color-accent);
+  border-radius: 0;
   padding: 7px 12px;
-  font-size: 13px;
-  font-weight: 850;
+  font-family: var(--font-label);
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
   margin-bottom: 12px;
 }
 
 .register-heading h1 {
-  color: #063d2b;
-  font-size: 34px;
-  letter-spacing: -0.05em;
-  margin: 0 0 8px;
+  color: var(--color-text);
+  font-family: var(--font-heading);
+  font-size: clamp(36px, 6vw, 64px);
+  line-height: 0.9;
+  letter-spacing: -0.08em;
+  text-transform: uppercase;
+  margin: 0 0 10px;
 }
 
 .register-heading p {
-  color: #6b7280;
+  color: var(--color-muted);
   line-height: 1.6;
 }
 
 .register-section {
-  border: 1px solid #e6e8e5;
-  border-radius: 24px;
+  border: 1px solid rgba(216, 199, 176, 0.45);
+  border-radius: 0;
   padding: 20px;
   margin-bottom: 18px;
-  background: #fbfcfa;
+  background: rgba(21, 21, 21, 0.18);
 }
 
 .register-section h2 {
-  color: #063d2b;
-  font-size: 18px;
+  color: var(--color-text);
+  font-family: var(--font-heading);
+  font-size: 20px;
+  line-height: 1;
+  letter-spacing: -0.05em;
+  text-transform: uppercase;
   margin-bottom: 16px;
 }
 
@@ -92,21 +112,24 @@
 }
 
 .register-field label {
-  color: #111827;
-  font-size: 14px;
-  font-weight: 800;
+  color: var(--color-muted);
+  font-family: var(--font-label);
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
 }
 
 .register-field input,
 .register-field select,
 .register-field textarea {
   width: 100%;
-  border: 1px solid #e6e8e5;
-  border-radius: 16px;
-  background: white;
+  border: 1px solid rgba(216, 199, 176, 0.45);
+  border-radius: 0;
+  background: rgba(21, 21, 21, 0.42);
   padding: 12px 14px;
-  color: #111827;
-  transition: all 0.2s ease;
+  color: var(--color-text);
+  transition: border-color 0.15s ease, background 0.15s ease;
 }
 
 .register-field textarea {
@@ -118,8 +141,8 @@
 .register-field select:focus,
 .register-field textarea:focus {
   outline: none;
-  border-color: #0f6b3f;
-  box-shadow: 0 0 0 4px rgba(15, 107, 63, 0.1);
+  border-color: var(--color-accent);
+  background: rgba(21, 21, 21, 0.72);
 }
 
 .register-actions {
@@ -131,21 +154,24 @@
   flex-wrap: wrap;
 }
 
-.register-actions a {
-  color: #6b7280;
-  font-weight: 800;
-  text-decoration: none;
+.register-submit {
+  border: 1px solid var(--color-accent);
+  border-radius: 0;
+  background: var(--color-accent);
+  color: var(--color-charcoal);
+  padding: 13px 22px;
+  font-family: var(--font-label);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  box-shadow: none;
 }
 
-.register-submit {
-  border: 0;
-  border-radius: 999px;
-  background: #0f6b3f;
-  color: white;
-  padding: 13px 22px;
-  font-weight: 850;
-  cursor: pointer;
-  box-shadow: 0 14px 28px rgba(15, 107, 63, 0.18);
+.register-submit:hover:not(:disabled) {
+  background: var(--color-text);
+  border-color: var(--color-text);
 }
 
 .register-submit:disabled {
@@ -160,7 +186,6 @@
 
   .register-card {
     padding: 22px;
-    border-radius: 26px;
   }
 
   .register-grid {

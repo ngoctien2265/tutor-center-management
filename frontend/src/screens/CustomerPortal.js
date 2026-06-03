@@ -350,27 +350,38 @@ function StudentTimetable({ weekStart, setWeekStart, weekDays, sessions, onViewC
       </div>
     </div>
     <div className="table-shell weekly-calendar-shell">
-      <div className="timetable-grid weekly-calendar-grid" style={{ gridTemplateColumns: `84px repeat(${weekDays.length}, minmax(140px, 1fr))` }}>
-        <div className="timetable-header-cell corner" />
-        {weekDays.map((day) => <div key={day.code} className="timetable-header-cell day-header"><strong>{day.label}</strong><span>{day.dateLabel}</span></div>)}
-        {hours.map((hour) => <React.Fragment key={hour}>
-          <div className="timetable-hour-cell">{String(hour).padStart(2, '0')}:00</div>
-          {weekDays.map((day) => {
-            const currentStart = hour * 60;
-            const currentEnd = (hour + 1) * 60;
-            const cellSessions = sessions.filter((item) => item.dateKey === day.dateKey && item.start < currentEnd && item.end > currentStart);
-            const confirmed = cellSessions.some((session) => session.isConfirmed);
-            return <div key={`${day.code}-${hour}`} className={cellSessions.length ? `timetable-cell state-class weekly-class-cell ${confirmed ? 'is-confirmed-session' : ''}` : 'timetable-cell state-empty'}>
-              {cellSessions.map((session) => <button key={`${session.classId}-${session.sessionNumber}-${hour}`} type="button" className="cell-class-label timetable-session-button" onClick={() => onViewClass(session.classId)}>
+      <div className="timetable-grid weekly-calendar-grid student-weekly-calendar-grid" style={{ gridTemplateColumns: `84px repeat(${weekDays.length}, minmax(140px, 1fr))`, gridTemplateRows: `auto repeat(${hours.length}, minmax(38px, 1fr))` }}>
+        <div className="timetable-header-cell corner" style={{ gridColumn: 1, gridRow: 1 }} />
+        {weekDays.map((day, dayIndex) => <div key={day.code} className="timetable-header-cell day-header" style={{ gridColumn: dayIndex + 2, gridRow: 1 }}><strong>{day.label}</strong><span>{day.dateLabel}</span></div>)}
+        {hours.map((hour, hourIndex) => <div key={`h-${hour}`} className="timetable-hour-cell" style={{ gridColumn: 1, gridRow: hourIndex + 2 }}>{String(hour).padStart(2, '0')}:00</div>)}
+        {weekDays.flatMap((day, dayIndex) => hours.flatMap((hour, hourIndex) => {
+          const currentStart = hour * 60;
+          const currentEnd = (hour + 1) * 60;
+          const hourSessions = sessions.filter((item) => item.dateKey === day.dateKey && item.start >= currentStart && item.start < currentEnd);
+          const coveredBySession = sessions.some((item) => item.dateKey === day.dateKey && item.start < currentEnd && item.end > currentStart);
+          if (!hourSessions.length) {
+            if (coveredBySession) return [];
+            return <div key={`${day.code}-${hour}`} className="timetable-cell state-empty" style={{ gridColumn: dayIndex + 2, gridRow: hourIndex + 2 }} />;
+          }
+          return hourSessions.map((session) => {
+            const rowStart = Math.max(0, Math.floor((session.start - 7 * 60) / 60));
+            const rowEnd = Math.min(hours.length, Math.ceil((session.end - 7 * 60) / 60));
+            const rowSpan = Math.max(1, rowEnd - rowStart);
+            return <div
+              key={`${day.code}-${session.classId}-${session.sessionNumber}`}
+              className={`timetable-cell state-class weekly-class-cell merged-class-cell student-weekly-class-cell ${session.isConfirmed ? 'is-confirmed-session' : ''}`}
+              style={{ gridColumn: dayIndex + 2, gridRow: `${rowStart + 2} / span ${rowSpan}` }}
+            >
+              <button type="button" className="cell-class-label timetable-session-button student-session-button" onClick={() => onViewClass(session.classId)}>
                 <strong>{session.classTitle}</strong>
                 <small>Buổi {session.sessionNumber}: {timeFromMinutes(session.start)}-{timeFromMinutes(session.end)}</small>
                 <small>{session.student} · {session.tutor}</small>
                 <small>{session.location}</small>
                 {session.isConfirmed && <em>Đã được staff duyệt</em>}
-              </button>)}
+              </button>
             </div>;
-          })}
-        </React.Fragment>)}
+          });
+        }))}
       </div>
     </div>
     {!sessions.length && <p className="muted" style={{ marginTop: 12 }}>Chưa có lớp nào có lịch học.</p>}
