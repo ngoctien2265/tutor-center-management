@@ -448,6 +448,8 @@ def finance_summary(request):
         enrollment = tx.enrollment_id
         payment_rows.append({
             'id': tx.id,
+            'transactionId': tx.id,
+            'enrollmentId': enrollment.id if enrollment else None,
             'parent': display_user_name(tx.user_id),
             'className': enrollment.class_id.subject_name if enrollment else 'Lớp học',
             'classId': enrollment.class_id_id if enrollment else None,
@@ -546,6 +548,31 @@ def finance_summary(request):
             for key, _ in Enrollment.STATUS_CHOICES
         },
     })
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def update_tuition_payment_status(request, transaction_id):
+    guard = require_admin(request)
+    if guard:
+        return guard
+    try:
+        tx = Transaction.objects.select_related('enrollment_id').get(pk=transaction_id, type='tuition_fee')
+    except Transaction.DoesNotExist:
+        return fail('Không tìm thấy khoản học phí.', status.HTTP_404_NOT_FOUND)
+    new_status = request.data.get('status')
+    if new_status not in ['paid', 'unpaid']:
+        return fail('Trạng thái thanh toán chỉ được là paid hoặc unpaid.')
+    tx.status = 'success' if new_status == 'paid' else 'pending'
+    tx.save(update_fields=['status', 'updated_at'])
+    if tx.enrollment_id:
+        tx.enrollment_id.status = 'paid' if new_status == 'paid' else 'unpaid'
+        tx.enrollment_id.save(update_fields=['status', 'updated_at'])
+    return ok({
+        'transactionId': tx.id,
+        'status': new_status,
+        'enrollmentStatus': tx.enrollment_id.status if tx.enrollment_id else None,
+    }, 'Đã đồng bộ trạng thái thanh toán học phí.')
 
 
 @api_view(['POST'])

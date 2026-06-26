@@ -3,9 +3,9 @@
   width: 100%;
   padding: 24px;
   background:
-    linear-gradient(90deg, rgba(216, 199, 176, 0.035) 1px, transparent 1px),
-    linear-gradient(rgba(216, 199, 176, 0.03) 1px, transparent 1px),
-    radial-gradient(circle at top left, rgba(201, 154, 74, 0.2), transparent 34rem),
+    linear-gradient(90deg, rgba(226, 232, 240, 0.45) 1px, transparent 1px),
+    linear-gradient(rgba(226, 232, 240, 0.45) 1px, transparent 1px),
+    radial-gradient(circle at top left, rgba(37, 99, 235, 0.12), transparent 34rem),
     var(--color-bg);
   background-size: 42px 42px, 42px 42px, auto, auto;
   color: var(--color-text);
@@ -72,7 +72,7 @@
   width: max-content;
   border: 1px solid var(--color-accent);
   border-radius: 0;
-  background: rgba(201, 154, 74, 0.16);
+  background: rgba(37, 99, 235, 0.10);
   color: var(--color-accent-2);
   padding: 8px 12px;
   font-family: var(--font-label);
@@ -148,7 +148,7 @@
 .preview-list p,
 .landing-info-card {
   background: var(--color-surface);
-  border: 2px solid rgba(216, 199, 176, 0.52);
+  border: 2px solid rgba(226, 232, 240, 1);
   border-radius: 0;
   box-shadow: none;
 }
@@ -218,7 +218,7 @@
 
 .preview-list span {
   border: 1px solid var(--color-accent);
-  background: rgba(201, 154, 74, 0.14);
+  background: rgba(37, 99, 235, 0.08);
   color: var(--color-accent-2);
   border-radius: 0;
   padding: 5px 10px;
@@ -281,7 +281,7 @@
 }
 
 .muted-card {
-  background: rgba(70, 41, 30, 0.76);
+  background: rgba(255, 255, 255, 0.86);
 }
 
 @media (max-width: 900px) {
@@ -318,4 +318,57 @@
   .landing-hero h1 {
     transform: none;
   }
+}
+
+/* ===== FINAL LIGHT LANDING THEME ===== */
+.landing-page {
+  background:
+    radial-gradient(circle at top left, rgba(37, 99, 235, 0.12), transparent 34rem),
+    linear-gradient(135deg, #f8fafc 0%, #ffffff 50%, #eff6ff 100%) !important;
+  color: #0f172a !important;
+}
+
+.landing-nav,
+.landing-card-preview,
+.landing-info-card,
+.preview-header,
+.preview-list li,
+.preview-stats div,
+.muted-card {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.07) !important;
+}
+
+.landing-brand,
+.landing-section-title,
+.landing-hero h1 {
+  color: #0f172a !important;
+}
+
+.landing-hero h1 span,
+.eyebrow,
+.landing-links a {
+  color: #2563eb !important;
+}
+
+.landing-hero p,
+.landing-info-card p,
+.preview-list span,
+.muted-card {
+  color: #64748b !important;
+}
+
+.landing-btn-primary,
+.landing-nav-cta {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+}
+
+.landing-btn-secondary {
+  background: #ffffff !important;
+  color: #1d4ed8 !important;
+  border-color: #bfdbfe !important;
 }

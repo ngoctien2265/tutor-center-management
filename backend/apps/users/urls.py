@@ -16,6 +16,7 @@ admin_urlpatterns = [
     path('dashboard', admin_views.dashboard),
     path('finance/summary', admin_views.finance_summary),
     path('finance/tutors/<int:tutor_id>/pay-salary', admin_views.pay_tutor_salary),
+    path('finance/payments/<int:transaction_id>/status', admin_views.update_tuition_payment_status),
     path('class-requests', admin_views.class_requests),
     path('classes/<int:class_id>/review', admin_views.review_class),
     path('staff', admin_views.staff_members),

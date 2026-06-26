@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Tutor Center logo">
+  <defs>
+    <linearGradient id="orange" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffb21a"/>
+      <stop offset="1" stop-color="#f47b12"/>
+    </linearGradient>
+    <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#16b5e8"/>
+      <stop offset="1" stop-color="#1265b8"/>
+    </linearGradient>
+  </defs>
+  <circle cx="128" cy="128" r="112" fill="#fffaf0"/>
+  <path d="M35 132c12-63 59-101 114-102 33 0 62 12 83 34" fill="none" stroke="url(#orange)" stroke-width="15" stroke-linecap="round"/>
+  <path d="M62 83v104c24-16 48-20 70-8V77c-23-9-47-7-70 6Z" fill="none" stroke="#116bb7" stroke-width="10" stroke-linejoin="round"/>
+  <path d="M194 83v104c-24-16-48-20-70-8V77c23-9 47-7 70 6Z" fill="none" stroke="#116bb7" stroke-width="10" stroke-linejoin="round"/>
+  <path d="M128 180c-20-26-37-56-34-101 11 17 25 29 44 33-10 19-12 40-10 68Z" fill="url(#orange)"/>
+  <circle cx="114" cy="76" r="17" fill="url(#orange)"/>
+  <path d="M139 172c13-21 24-43 23-78-9 13-21 23-37 27 8 16 10 33 14 51Z" fill="url(#blue)"/>
+  <circle cx="153" cy="91" r="14" fill="url(#blue)"/>
+  <path d="M51 200c30-16 56-18 77-4 24-14 50-12 77 4" fill="none" stroke="#0a5da8" stroke-width="9" stroke-linecap="round"/>
+</svg>

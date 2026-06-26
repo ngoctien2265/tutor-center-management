@@ -4,14 +4,14 @@
   gap: 10px;
   margin-bottom: 24px;
   padding-bottom: 12px;
-  border-bottom: 2px solid rgba(216, 199, 176, 0.45);
+  border-bottom: 2px solid rgba(226, 232, 240, 0.95);
   overflow-x: auto;
 }
 
 .tab-button {
   min-height: 46px;
   padding: 0 20px;
-  border: 1px solid rgba(216, 199, 176, 0.45);
+  border: 1px solid rgba(226, 232, 240, 0.95);
   border-radius: 0;
   background: transparent;
   color: var(--color-muted);
@@ -25,7 +25,7 @@
 }
 
 .tab-button:hover {
-  background: rgba(216, 199, 176, 0.08);
+  background: rgba(37, 99, 235, 0.08);
   color: var(--color-text);
 }
 
@@ -42,7 +42,7 @@
   padding: 18px;
   flex-wrap: wrap;
   background: var(--color-surface);
-  border: 2px solid rgba(216, 199, 176, 0.5);
+  border: 2px solid rgba(226, 232, 240, 1);
 }
 
 .filter-group {
@@ -65,9 +65,9 @@
   min-width: 160px;
   min-height: 42px;
   padding: 0 12px;
-  border: 1px solid rgba(216, 199, 176, 0.45);
+  border: 1px solid rgba(226, 232, 240, 0.95);
   border-radius: 0;
-  background: rgba(21, 21, 21, 0.42);
+  background: #ffffff;
   color: var(--color-text);
   cursor: pointer;
 }
@@ -75,7 +75,7 @@
 .filter-group select:focus {
   outline: none;
   border-color: var(--color-accent);
-  background: rgba(21, 21, 21, 0.72);
+  background: #ffffff;
 }
 
 .finance-action-btn {
@@ -126,7 +126,7 @@
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background: rgba(10, 8, 6, 0.78);
+  background: rgba(15, 23, 42, 0.45);
 }
 
 .finance-payment-modal {
@@ -222,9 +222,9 @@
 .bank-warning {
   margin-top: 14px;
   padding: 12px;
-  border: 1px solid rgba(201, 154, 74, 0.78);
+  border: 1px solid rgba(37, 99, 235, 0.32);
   border-radius: 0;
-  background: rgba(201, 154, 74, 0.14);
+  background: rgba(37, 99, 235, 0.08);
   color: var(--color-accent-2);
   font-weight: 800;
 }
@@ -233,9 +233,9 @@
   white-space: pre-wrap;
   margin: 14px 0 0;
   padding: 12px;
-  border: 1px solid rgba(216, 199, 176, 0.32);
+  border: 1px solid rgba(226, 232, 240, 0.95);
   border-radius: 0;
-  background: rgba(21, 21, 21, 0.42);
+  background: #ffffff;
   color: var(--color-muted);
   font-size: 12px;
 }
@@ -250,7 +250,7 @@
   overflow-x: auto;
   max-height: 600px;
   overflow-y: auto;
-  border: 1px solid rgba(216, 199, 176, 0.28);
+  border: 1px solid rgba(226, 232, 240, 0.95);
 }
 
 .table-wrapper::-webkit-scrollbar {
@@ -259,7 +259,7 @@
 }
 
 .table-wrapper::-webkit-scrollbar-track {
-  background: rgba(21, 21, 21, 0.42);
+  background: #ffffff;
 }
 
 .table-wrapper::-webkit-scrollbar-thumb {
@@ -284,7 +284,7 @@
 
 .admin-table.compact-table thead th {
   padding: 13px 16px;
-  border-bottom: 2px solid rgba(216, 199, 176, 0.45);
+  border-bottom: 2px solid rgba(226, 232, 240, 0.95);
   color: var(--color-accent-2);
   font-family: var(--font-label);
   font-size: 11px;
@@ -294,11 +294,11 @@
 }
 
 .admin-table.compact-table tbody tr {
-  border-bottom: 1px solid rgba(216, 199, 176, 0.22);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.95);
 }
 
 .admin-table.compact-table tbody tr:hover {
-  background: rgba(245, 239, 230, 0.05);
+  background: rgba(37, 99, 235, 0.04);
 }
 
 .admin-table.compact-table tbody td {
@@ -329,17 +329,17 @@
 }
 
 .status-badge.active {
-  background: rgba(104, 122, 70, 0.24);
-  color: #dfe8c6;
+  background: rgba(22, 163, 74, 0.10);
+  color: #16a34a;
 }
 
 .status-badge.status-yellow {
-  background: rgba(201, 154, 74, 0.16);
+  background: rgba(37, 99, 235, 0.10);
   color: var(--color-accent-2);
 }
 
 .status-badge.inactive {
-  background: rgba(245, 239, 230, 0.08);
+  background: rgba(37, 99, 235, 0.06);
   color: var(--color-muted);
 }
 
@@ -367,7 +367,7 @@
 
 .chart-card {
   background: var(--color-surface);
-  border: 2px solid rgba(216, 199, 176, 0.58);
+  border: 2px solid rgba(226, 232, 240, 1);
   border-radius: 0;
   padding: 24px;
   box-shadow: none;
@@ -393,7 +393,7 @@
 }
 
 .chart-svg line {
-  stroke: rgba(216, 199, 176, 0.3);
+  stroke: rgba(226, 232, 240, 0.95);
 }
 
 .panel-grid-2 {
@@ -477,4 +477,117 @@
   .finance-payment-modal {
     padding: 24px;
   }
+}
+
+.finance-history-card {
+  margin-top: 24px;
+}
+
+.money-card h3,
+.admin-stat h3 {
+  max-width: calc(100% - 38px);
+  font-size: clamp(24px, 2.2vw, 34px);
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+  word-break: keep-all;
+}
+
+.finance-action-btn.secondary {
+  white-space: normal;
+  min-width: 150px;
+}
+
+/* Giữ số tiền trên một dòng trong thẻ thống kê tài chính */
+.finance-stat-row {
+  grid-template-columns: repeat(4, minmax(210px, 1fr));
+}
+
+.finance-stat-row .money-card {
+  min-width: 0;
+}
+
+.finance-stat-row .money-card h3 {
+  max-width: calc(100% - 42px) !important;
+  margin-top: 34px;
+  padding-right: 0 !important;
+  white-space: nowrap;
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+  font-size: clamp(20px, 1.7vw, 30px) !important;
+  letter-spacing: -0.045em;
+}
+
+@media (max-width: 1320px) {
+  .finance-stat-row {
+    grid-template-columns: repeat(2, minmax(260px, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .finance-stat-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===== FINAL LIGHT FINANCE THEME ===== */
+.finance-tabs,
+.filter-bar,
+.finance-history-card,
+.bank-info-card,
+.bank-warning,
+.finance-payment-modal,
+.finance-stat-row .admin-stat,
+.salary-payment-grid,
+.panel-grid-2 > * {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.07) !important;
+}
+
+.finance-tabs {
+  box-shadow: none !important;
+}
+
+.filter-bar select,
+.filter-group select {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+
+.finance-history-card h2,
+.bank-info-card h3,
+.bank-warning h3,
+.finance-payment-modal h2,
+.finance-stat-row h3,
+.finance-stat-row p {
+  color: #0f172a !important;
+}
+
+.finance-history-card p,
+.bank-info-card p,
+.bank-warning p,
+.muted,
+.loading-state,
+.empty-state {
+  color: #64748b !important;
+}
+
+.finance-action-btn,
+.finance-modal-close {
+  border-radius: 12px !important;
+}
+
+.finance-modal-backdrop {
+  background: rgba(15, 23, 42, 0.45) !important;
+}
+
+.finance-payment-modal {
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.22) !important;
+}
+
+.chart-svg line,
+.chart-svg path {
+  stroke-opacity: 0.95;
 }

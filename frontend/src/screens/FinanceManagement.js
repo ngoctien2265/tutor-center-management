@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { toast } from 'react-toastify';
 import './Dashboard.css';
 import './ListPage.css';
 import './FinanceManagement.css';
@@ -25,12 +26,16 @@ function LineChart({ labels = [], values = [] }) {
   return <svg className="chart-svg" viewBox="0 0 620 340">{[0,1,2,3,4].map(i=><line key={i} x1="70" x2="590" y1={50+i*58} y2={50+i*58} stroke="#d1d5db" strokeDasharray="4 4" />)}{safeLabels.map((_,i)=><line key={'v'+i} x1={70+i*104} x2={70+i*104} y1="50" y2="282" stroke="#d1d5db" strokeDasharray="4 4" />)}<line x1="70" x2="590" y1="282" y2="282" stroke="#6b7280"/><line x1="70" x2="70" y1="50" y2="282" stroke="#6b7280"/>{ticks.map((v,i)=><text key={v} x="58" y={288-i*58} textAnchor="end" fill="#64748b" fontSize="15">{Math.round(v)}</text>)}<polyline fill="none" stroke="#8b5cf6" strokeWidth="3" points={pts}/>{vals.map((v,i)=><circle key={i} cx={70+i*104} cy={282-(v/max)*232} r="4" fill="#fff" stroke="#8b5cf6" strokeWidth="3"/>)}{safeLabels.map((m,i)=><text key={m} x={70+i*104} y="310" textAnchor="middle" fill="#64748b" fontSize="17">{m}</text>)}</svg>;
 }
 
+function isPaidStatus(status) {
+  return ['paid', 'success', 'completed'].includes(String(status || '').toLowerCase());
+}
+
 function statusLabel(status) {
-  return status === 'paid' || status === 'success' ? 'Đã thanh toán' : 'Chưa thanh toán';
+  return isPaidStatus(status) ? 'Đã thanh toán' : 'Chưa thanh toán';
 }
 
 function statusClass(status) {
-  return status === 'paid' || status === 'success' ? 'active' : 'status-yellow';
+  return isPaidStatus(status) ? 'active' : 'status-yellow';
 }
 
 function FinanceManagement() {
@@ -39,12 +44,10 @@ function FinanceManagement() {
   const [allPayments, setAllPayments] = useState([]);
   const [allSalaries, setAllSalaries] = useState([]);
   const [charts, setCharts] = useState({ labels: [], revenue: [], salary: [], profit: [] });
-  const [classPaymentStatus, setClassPaymentStatus] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const [paymentFilter, setPaymentFilter] = useState('all');
   const [salaryFilter, setSalaryFilter] = useState('all');
-  const [selectedClass, setSelectedClass] = useState('all');
   const [salaryPayment, setSalaryPayment] = useState(null);
   const [confirmingSalary, setConfirmingSalary] = useState(false);
 
@@ -56,13 +59,11 @@ function FinanceManagement() {
         setSummary(data.summary || {});
         setCharts(data.charts || { labels: [], revenue: [], salary: [], profit: [] });
         setAllPayments(data.paymentRows || data.recentPayments || []);
-        setClassPaymentStatus(data.classPaymentStatus || []);
         setAllSalaries(data.salaryRows || []);
       })
       .catch(() => {
         setSummary({});
         setAllPayments([]);
-        setClassPaymentStatus([]);
         setAllSalaries([]);
       })
       .finally(() => setLoading(false));
@@ -78,8 +79,9 @@ function FinanceManagement() {
   const uncollected = summary.uncollectedTuition || 0;
 
   const filteredPayments = allPayments.filter(p => {
-    if (paymentFilter === 'paid') return p.status === 'success';
-    if (paymentFilter === 'unpaid') return p.status !== 'success';
+    const paid = isPaidStatus(p.status);
+    if (paymentFilter === 'paid') return paid;
+    if (paymentFilter === 'unpaid') return !paid;
     return true;
   });
 
@@ -87,11 +89,19 @@ function FinanceManagement() {
     let matches = true;
     if (salaryFilter === 'paid') matches = matches && s.status === 'paid';
     if (salaryFilter === 'unpaid') matches = matches && s.status !== 'paid';
-    if (selectedClass !== 'all') matches = matches && s.classes >= parseInt(selectedClass);
     return matches;
   });
 
-  const classStatusArray = classPaymentStatus;
+  const updateTuitionStatus = async (row, nextStatus) => {
+    try {
+      await axios.post(`/v1/admin/finance/payments/${row.transactionId || row.id}/status`, { status: nextStatus });
+      toast.success(nextStatus === 'paid' ? 'Đã xác nhận học phí.' : 'Đã chuyển về chưa thanh toán.');
+      loadFinance();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Không cập nhật được trạng thái học phí.');
+    }
+  };
+
   const hasTutorBankInfo = salaryPayment && (salaryPayment.bankName || salaryPayment.bankBranch || salaryPayment.bankAccountNumber);
   const confirmTutorSalary = async () => {
     if (!salaryPayment) return;
@@ -134,7 +144,7 @@ function FinanceManagement() {
 
       {activeTab === 'statistics' && (
         <>
-          <section className="stat-row">
+          <section className="stat-row finance-stat-row">
             <article className="admin-stat money-card">
               <span className="icon green">$</span>
               <p>Doanh thu tháng này</p>
@@ -187,74 +197,42 @@ function FinanceManagement() {
             </div>
           </section>
 
-          <section className="panel-grid-2">
-            <article className="table-card">
-              <h2>Lịch sử thanh toán học phí</h2>
-              <div className="table-wrapper">
-                <table className="admin-table compact-table">
-                  <thead>
-                    <tr>
-                      <th>Phụ huynh</th>
-                      <th>Lớp học</th>
-                      <th>Số tiền</th>
-                      <th>Ngày</th>
-                      <th>Trạng thái</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredPayments.length === 0 ? (
-                      <tr><td colSpan="5" style={{ textAlign: 'center' }}>Không có dữ liệu</td></tr>
-                    ) : (
-                      filteredPayments.map((p) => (
-                        <tr key={p.id}>
-                          <td><strong>{p.parent}</strong></td>
-                          <td>{p.className}</td>
-                          <td><strong>{money(p.amount)}</strong></td>
-                          <td>{p.date}</td>
-                          <td>
-                            <span className={`status-badge ${statusClass(p.status)}`}>
-                              {statusLabel(p.status)}
-                            </span>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </article>
-
-            <article className="table-card">
-              <h2>Trạng thái thanh toán theo lớp</h2>
-              <div className="table-wrapper">
-                <table className="admin-table compact-table">
-                  <thead>
-                    <tr>
-                      <th>Lớp học</th>
-                      <th>Đã thanh toán</th>
-                      <th>Chưa thanh toán</th>
-                      <th>Tổng học viên</th>
-                      <th>Tổng học phí</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {classStatusArray.length === 0 ? (
-                      <tr><td colSpan="5" style={{ textAlign: 'center' }}>Không có dữ liệu</td></tr>
-                    ) : (
-                      classStatusArray.map((c, idx) => (
-                        <tr key={idx}>
-                          <td><strong>{c.className}</strong></td>
-                          <td><span className="status-badge active">{c.paid}</span></td>
-                          <td><span className="status-badge status-yellow">{c.unpaid}</span></td>
-                          <td>{c.total}</td>
-                          <td><strong>{money(c.totalFee)}</strong></td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </article>
+          <section className="table-card full-width finance-history-card">
+            <h2>Lịch sử thanh toán học phí</h2>
+            <div className="table-wrapper">
+              <table className="admin-table compact-table">
+                <thead>
+                  <tr>
+                    <th>Phụ huynh</th>
+                    <th>Lớp học</th>
+                    <th>Số tiền</th>
+                    <th>Ngày</th>
+                    <th>Trạng thái</th>
+                    <th>Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredPayments.length === 0 ? (
+                    <tr><td colSpan="6" style={{ textAlign: 'center' }}>Không có dữ liệu</td></tr>
+                  ) : (
+                    filteredPayments.map((p) => (
+                      <tr key={p.id}>
+                        <td><strong>{p.parent}</strong></td>
+                        <td>{p.className}</td>
+                        <td><strong>{money(p.amount)}</strong></td>
+                        <td>{p.date}</td>
+                        <td><span className={`status-badge ${statusClass(p.status)}`}>{statusLabel(p.status)}</span></td>
+                        <td>
+                          {isPaidStatus(p.status)
+                            ? <button type="button" className="finance-action-btn secondary" onClick={() => updateTuitionStatus(p, 'unpaid')}>Chuyển chưa thanh toán</button>
+                            : <button type="button" className="finance-action-btn" onClick={() => updateTuitionStatus(p, 'paid')}>Xác nhận</button>}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </section>
         </>
       )}
@@ -268,15 +246,6 @@ function FinanceManagement() {
                 <option value="all">Tất cả</option>
                 <option value="paid">Đã nhận lương</option>
                 <option value="unpaid">Chưa nhận lương</option>
-              </select>
-            </div>
-            <div className="filter-group">
-              <label>Số lớp:</label>
-              <select value={selectedClass} onChange={(e) => setSelectedClass(e.target.value)}>
-                <option value="all">Tất cả</option>
-                <option value="1">≥ 1 lớp</option>
-                <option value="2">≥ 2 lớp</option>
-                <option value="3">≥ 3 lớp</option>
               </select>
             </div>
           </section>

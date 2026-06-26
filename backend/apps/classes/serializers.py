@@ -44,6 +44,13 @@ class ClassSerializer(serializers.ModelSerializer):
             'grade_level': student.grade_level,
             'gradeLevel': student.grade_level,
             'school_name': student.school_name,
+            'schoolName': student.school_name,
+            'parent_name': student.parent_name or '',
+            'parentName': student.parent_name or '',
+            'parent_phone': student.parent_phone or '',
+            'parentPhone': student.parent_phone or '',
+            'parent_email': student.parent_email or '',
+            'parentEmail': student.parent_email or '',
         }
 
     def get_parent(self, obj):

@@ -5,7 +5,7 @@
   min-height: 100vh;
   padding: 32px 32px 48px;
   background:
-    radial-gradient(circle at 85% 0%, rgba(201, 154, 74, 0.14), transparent 30%),
+    radial-gradient(circle at 85% 0%, rgba(37, 99, 235, 0.08), transparent 30%),
     transparent;
   color: var(--color-text);
 }
@@ -60,7 +60,7 @@
 .staff-card,
 .staff-form-card {
   background: var(--color-surface);
-  border: 2px solid rgba(216, 199, 176, 0.58);
+  border: 2px solid rgba(226, 232, 240, 1);
   border-radius: 0;
   box-shadow: none;
   color: var(--color-text);
@@ -96,7 +96,7 @@
   place-items: center;
   border: 1px solid var(--color-border);
   border-radius: 0;
-  background: rgba(21, 21, 21, 0.42);
+  background: #ffffff;
   color: var(--color-accent-2);
   font-size: 22px;
   font-weight: 900;
@@ -192,8 +192,8 @@
   width: 100%;
   height: 340px;
   display: block;
-  background: rgba(21, 21, 21, 0.2);
-  border: 1px solid rgba(216, 199, 176, 0.28);
+  background: rgba(248, 250, 252, 0.95);
+  border: 1px solid rgba(226, 232, 240, 0.95);
 }
 
 .recent-list,
@@ -212,7 +212,7 @@
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 12px;
   padding: 17px 0;
-  border-bottom: 1px solid rgba(216, 199, 176, 0.24);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.95);
   color: var(--color-muted);
 }
 
@@ -286,10 +286,10 @@
 .mini-tutor-card,
 .staff-class-card,
 .report-big-stat {
-  border: 2px solid rgba(216, 199, 176, 0.5);
+  border: 2px solid rgba(226, 232, 240, 1);
   border-radius: 0;
   padding: 24px;
-  background: rgba(51, 32, 24, 0.92);
+  background: #ffffff;
   color: var(--color-text);
 }
 
@@ -409,10 +409,10 @@ td .button:hover,
 }
 
 .icon-button.success,
-.staff-icon-btn.green { color: #dfe8c6; }
+.staff-icon-btn.green { color: #16a34a; }
 .icon-button.danger,
 .staff-icon-btn.red,
-.more-actions-menu button.danger { color: #f0b3aa; }
+.more-actions-menu button.danger { color: #dc2626; }
 .icon-button.primary,
 .staff-icon-btn.dark { color: var(--color-accent-2); }
 
@@ -424,7 +424,7 @@ td .button:hover,
 }
 
 .table-shell {
-  border: 2px solid rgba(216, 199, 176, 0.5);
+  border: 2px solid rgba(226, 232, 240, 1);
   border-radius: 0;
 }
 
@@ -444,7 +444,7 @@ td .button:hover,
 .staff-table thead,
 .admin-table thead,
 .list-container thead {
-  background: rgba(21, 21, 21, 0.55);
+  background: #f1f5f9;
 }
 
 .staff-table th,
@@ -455,7 +455,7 @@ td .button:hover,
 .list-container td {
   padding: 15px 16px;
   text-align: left;
-  border-bottom: 1px solid rgba(216, 199, 176, 0.24);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.95);
   vertical-align: middle;
 }
 
@@ -480,7 +480,7 @@ td .button:hover,
 .staff-table tbody tr:hover,
 .admin-table tbody tr:hover,
 .list-container tbody tr:hover {
-  background: rgba(245, 239, 230, 0.05);
+  background: rgba(37, 99, 235, 0.04);
 }
 
 .staff-table tbody tr:last-child td,
@@ -537,27 +537,27 @@ td .button:hover,
 .role-student,
 .status-purple,
 .role-tutor {
-  background: rgba(201, 154, 74, 0.16);
+  background: rgba(37, 99, 235, 0.10);
   color: var(--color-accent-2);
 }
 
 .staff-badge.green,
 .status-badge.active,
 .status-green {
-  background: rgba(104, 122, 70, 0.24);
-  color: #dfe8c6;
+  background: rgba(22, 163, 74, 0.10);
+  color: #16a34a;
 }
 
 .staff-badge.red,
 .status-badge.locked,
 .status-red,
 .role-admin {
-  background: rgba(168, 77, 63, 0.24);
-  color: #f0b3aa;
+  background: rgba(220, 38, 38, 0.10);
+  color: #dc2626;
 }
 
 .status-badge.inactive {
-  background: rgba(245, 239, 230, 0.08);
+  background: rgba(37, 99, 235, 0.06);
   color: var(--color-muted);
 }
 
@@ -590,9 +590,9 @@ td .button:hover,
   width: 100%;
   min-height: 46px;
   padding: 0 14px;
-  border: 1px solid rgba(216, 199, 176, 0.42);
+  border: 1px solid rgba(226, 232, 240, 0.95);
   border-radius: 0;
-  background: rgba(21, 21, 21, 0.42);
+  background: #ffffff;
   color: var(--color-text);
   outline: none;
 }
@@ -615,14 +615,14 @@ td .button:hover,
 .search-box input:focus,
 .admin-select:focus {
   border-color: var(--color-accent);
-  background: rgba(21, 21, 21, 0.72);
+  background: #ffffff;
 }
 
 .form-grid input:disabled,
 .form-grid select:disabled,
 .profile-readonly-grid input:disabled {
   color: var(--color-muted);
-  background: rgba(21, 21, 21, 0.26);
+  background: rgba(241, 245, 249, 0.95);
   cursor: not-allowed;
 }
 
@@ -712,7 +712,7 @@ td .button:hover,
   display: grid;
   place-items: center;
   padding: 24px;
-  background: rgba(10, 8, 6, 0.78);
+  background: rgba(15, 23, 42, 0.45);
 }
 
 .modal-backdrop {
@@ -828,7 +828,7 @@ td .button:hover,
   min-height: 42px;
   padding: 0 14px;
   border: 0;
-  border-bottom: 1px solid rgba(216, 199, 176, 0.28);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.95);
   background: transparent;
   color: var(--color-text);
   text-align: left;
@@ -842,7 +842,7 @@ td .button:hover,
 }
 
 .more-actions-menu button:hover {
-  background: rgba(216, 199, 176, 0.08);
+  background: rgba(37, 99, 235, 0.08);
 }
 
 .pagination {
@@ -937,4 +937,317 @@ td .button:hover,
   .staff-day-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .admin-toolbar { align-items: stretch; }
   .primary-button { width: 100%; }
+}
+
+/* Staff request/payment polish */
+.request-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 18px;
+}
+
+.request-review-card,
+.payment-panel {
+  padding: 22px;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  border-radius: 16px;
+  background: rgba(241, 245, 249, 0.9);
+}
+
+.request-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.request-card-head h3,
+.payment-panel h3 {
+  margin: 0 0 8px;
+  color: var(--color-text);
+  font-family: var(--font-heading);
+  font-size: 18px;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  text-transform: none;
+}
+
+.request-card-head p { margin: 0; color: var(--color-muted); }
+
+.request-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.request-info-grid span {
+  display: grid;
+  gap: 5px;
+  padding: 12px;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  border-radius: 12px;
+  color: var(--color-text);
+  background: rgba(248, 250, 252, 0.95);
+}
+
+.request-info-grid b {
+  color: var(--color-accent-2);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.danger-text { color: #dc2626 !important; border-color: rgba(220, 38, 38, 0.38) !important; }
+
+.staff-payment-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 20px;
+}
+
+.payment-panel .table-shell {
+  max-height: 420px;
+}
+
+.payment-table {
+  min-width: 680px;
+}
+
+@media (max-width: 1280px) {
+  .staff-payment-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 720px) {
+  .request-info-grid { grid-template-columns: 1fr; }
+}
+
+/* Final brighter shared admin/staff polish */
+.dashboard-container,
+.list-container,
+.staff-page,
+.admin-page {
+  background:
+    radial-gradient(circle at 85% -10%, rgba(37, 99, 235, 0.08), transparent 34%),
+    linear-gradient(135deg, #eff6ff 0%, #ffffff 52%, #f8fafc 100%);
+}
+.admin-topbar,
+.dashboard-container > h1,
+.list-container > h1,
+.staff-page > h1 {
+  letter-spacing: -0.04em;
+}
+.chart-card,
+.table-card,
+.admin-card,
+.card,
+.staff-card,
+.staff-form-card,
+.create-class-card,
+.admin-stat,
+.stat-card,
+.staff-class-card,
+.request-review-card,
+.payment-panel,
+.filter-bar,
+.finance-tabs,
+.table-shell,
+.table-wrapper,
+.staff-request-item,
+.primary-button,
+.secondary-button,
+.staff-primary-btn,
+.staff-light-btn,
+.tab-button,
+.admin-select,
+.filter-group select,
+.filter-group input,
+.form-group input,
+.form-group select,
+.form-group textarea,
+.admin-input,
+.more-actions-menu,
+.floating-actions-menu {
+  border-radius: 14px !important;
+}
+.admin-stat h3,
+.stat-card h3,
+.money-card h3 {
+  font-size: clamp(24px, 2.4vw, 36px) !important;
+  line-height: 1.05;
+  overflow-wrap: anywhere;
+  padding-right: 46px;
+}
+.staff-card,
+.table-card,
+.chart-card,
+.admin-stat,
+.request-review-card,
+.payment-panel {
+  border-color: rgba(37, 99, 235, 0.24);
+  box-shadow: 0 18px 38px rgba(15, 23, 42, 0.08);
+}
+.admin-table th,
+.staff-table th {
+  letter-spacing: 0.06em;
+}
+.request-review-card { background: rgba(248, 250, 252, 0.95); }
+.request-info-grid span { min-height: 72px; }
+.payment-panel .table-shell { border-radius: 12px !important; }
+
+/* Staff: đặt bảng lương gia sư xuống dưới bảng thanh toán học phí để dễ nhìn ở mức zoom 100% */
+.staff-payment-grid {
+  grid-template-columns: 1fr !important;
+}
+
+.payment-panel .table-shell {
+  max-height: none;
+}
+
+/* ===== FINAL LIGHT DASHBOARD / STAFF THEME ===== */
+.admin-page,
+.dashboard-container,
+.list-container,
+.staff-page {
+  background:
+    radial-gradient(circle at 90% -12%, rgba(37, 99, 235, 0.08), transparent 34rem),
+    linear-gradient(135deg, #f8fafc 0%, #ffffff 52%, #eff6ff 100%) !important;
+  color: #0f172a !important;
+}
+
+.admin-topbar,
+.dashboard-container > h1,
+.list-container > h1,
+.staff-page > h1 {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05) !important;
+  letter-spacing: -0.045em !important;
+}
+
+.admin-topbar h1,
+.admin-toolbar h2,
+.staff-page h2,
+.staff-card h2,
+.staff-form-card h2,
+.chart-card h2,
+.table-card h2,
+.request-review-card h2,
+.money-card h2,
+.admin-stat p,
+.admin-stat h3,
+.stat-card p,
+.stat-card h3,
+.top-item strong,
+.recent-item strong,
+.staff-class-card h3,
+.request-card-head h3,
+.mini-tutor-card strong {
+  color: #0f172a !important;
+}
+
+.admin-stat,
+.stat-card,
+.chart-card,
+.table-card,
+.staff-card,
+.staff-form-card,
+.request-review-card,
+.staff-class-card,
+.request-card-head,
+.create-class-card,
+.payment-panel,
+.money-card,
+.top-item,
+.recent-item,
+.mini-tutor-card,
+.admin-card {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.07) !important;
+}
+
+.admin-stat::before,
+.stat-card::before,
+.money-card::before {
+  background: #2563eb !important;
+}
+
+.admin-stat p,
+.stat-card p,
+.money-card p,
+.chart-card p,
+.request-info-grid span,
+.staff-class-card p,
+.recent-item span,
+.top-item span,
+.muted,
+.modal-subtitle,
+.form-subtitle,
+.page-info,
+.filter-group label {
+  color: #64748b !important;
+}
+
+.staff-icon-btn,
+.icon-button,
+.action-buttons .button,
+td .button,
+.more-actions-cell > button,
+.floating-actions-menu button {
+  background: #ffffff !important;
+  color: #1d4ed8 !important;
+  border-color: #bfdbfe !important;
+}
+
+.staff-icon-btn:hover,
+.icon-button:hover,
+.action-buttons .button:hover,
+td .button:hover,
+.more-actions-cell > button:hover,
+.floating-actions-menu button:hover {
+  background: #dbeafe !important;
+  color: #1e40af !important;
+  border-color: #93c5fd !important;
+}
+
+.more-actions-menu,
+.floating-actions-menu {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 20px 48px rgba(15, 23, 42, 0.18) !important;
+}
+
+.more-actions-menu button,
+.floating-actions-menu button {
+  color: #0f172a !important;
+  border-bottom-color: #e2e8f0 !important;
+}
+
+.more-actions-menu button:hover,
+.floating-actions-menu button:hover {
+  background: #eff6ff !important;
+  color: #1d4ed8 !important;
+}
+
+.form-modal-backdrop,
+.modal-backdrop {
+  background: rgba(15, 23, 42, 0.45) !important;
+}
+
+.form-modal,
+.modal-card {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.22) !important;
+}
+
+.chart-svg,
+.chart-card svg {
+  color: #475569 !important;
 }

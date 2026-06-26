@@ -1,40 +1,40 @@
-@import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&display=swap');
 
 :root {
-  --color-bg: #24140f;
-  --color-bg-deep: #15100d;
-  --color-surface: #332018;
-  --color-surface-2: #46291e;
-  --color-surface-3: #f5efe6;
-  --color-text: #f5efe6;
-  --color-text-dark: #1a120e;
-  --color-muted: #b8a99a;
-  --color-border: #d8c7b0;
-  --color-accent: #c99a4a;
-  --color-accent-2: #e0b76d;
-  --color-danger: #a84d3f;
-  --color-success: #687a46;
-  --color-warning: #c99a4a;
-  --color-charcoal: #151515;
-  --font-heading: 'Archivo Black', Impact, sans-serif;
+  --color-bg: #f8fafc;
+  --color-bg-deep: #ffffff;
+  --color-surface: #ffffff;
+  --color-surface-2: #f1f5f9;
+  --color-surface-3: #eff6ff;
+  --color-text: #0f172a;
+  --color-text-dark: #0f172a;
+  --color-muted: #64748b;
+  --color-border: #e2e8f0;
+  --color-accent: #2563eb;
+  --color-accent-2: #1d4ed8;
+  --color-danger: #dc2626;
+  --color-success: #16a34a;
+  --color-warning: #2563eb;
+  --color-charcoal: #ffffff;
+  --font-heading: 'Manrope', 'Inter', ui-sans-serif, system-ui, sans-serif;
   --font-body: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-label: 'Space Grotesk', 'Inter', sans-serif;
-  --radius-sm: 0px;
-  --radius-md: 2px;
-  --radius-lg: 4px;
-  --shadow-sm: none;
-  --shadow-md: none;
+  --font-label: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --shadow-sm: 0 8px 22px rgba(15, 23, 42, 0.08);
+  --shadow-md: 0 18px 44px rgba(15, 23, 42, 0.10);
 
   --app-bg: var(--color-bg);
   --app-bg-soft: var(--color-surface);
   --card-bg: var(--color-surface);
   --primary: var(--color-accent);
   --primary-dark: var(--color-accent-2);
-  --primary-soft: rgba(201, 154, 74, 0.16);
+  --primary-soft: rgba(37, 99, 235, 0.10);
   --text-primary: var(--color-text);
   --text-secondary: var(--color-muted);
-  --text-muted: rgba(184, 169, 154, 0.72);
-  --border: rgba(216, 199, 176, 0.5);
+  --text-muted: #64748b;
+  --border: #e2e8f0;
   --success: var(--color-success);
   --warning: var(--color-warning);
   --error: var(--color-danger);
@@ -78,16 +78,16 @@ textarea {
 }
 
 button {
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  text-transform: none;
+  letter-spacing: 0.01em;
 }
 
 .App {
   display: flex;
   min-height: 100vh;
   background:
-    linear-gradient(90deg, rgba(216, 199, 176, 0.035) 1px, transparent 1px),
-    linear-gradient(rgba(216, 199, 176, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(226, 232, 240, 0.45) 1px, transparent 1px),
+    linear-gradient(rgba(226, 232, 240, 0.45) 1px, transparent 1px),
     var(--color-bg);
   background-size: 42px 42px;
 }
@@ -161,9 +161,9 @@ button {
 }
 
 .button-danger {
-  background: rgba(168, 77, 63, 0.16);
-  color: #f0b3aa;
-  border-color: rgba(168, 77, 63, 0.7);
+  background: rgba(220, 38, 38, 0.08);
+  color: #dc2626;
+  border-color: rgba(220, 38, 38, 0.28);
 }
 
 .button-danger:hover {
@@ -194,7 +194,7 @@ button {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   font-size: 14px;
-  background: rgba(21, 21, 21, 0.42);
+  background: #ffffff;
   color: var(--color-text);
   transition: border-color 0.15s ease, background 0.15s ease;
 }
@@ -204,13 +204,13 @@ button {
 .form-group textarea:focus {
   outline: none;
   border-color: var(--color-accent);
-  background: rgba(21, 21, 21, 0.72);
+  background: #ffffff;
   box-shadow: none;
 }
 
 .form-group input::placeholder,
 .form-group textarea::placeholder {
-  color: rgba(184, 169, 154, 0.65);
+  color: #94a3b8;
 }
 
 table {
@@ -220,14 +220,14 @@ table {
 }
 
 thead {
-  background: rgba(21, 21, 21, 0.42);
+  background: #ffffff;
 }
 
 th,
 td {
   padding: 15px 16px;
   text-align: left;
-  border-bottom: 1px solid rgba(216, 199, 176, 0.22);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.95);
   vertical-align: middle;
 }
 
@@ -246,7 +246,7 @@ td {
 }
 
 tbody tr:hover {
-  background: rgba(245, 239, 230, 0.05);
+  background: rgba(37, 99, 235, 0.04);
 }
 
 .loading {
@@ -262,7 +262,7 @@ tbody tr:hover {
 }
 
 .spinner {
-  border: 3px solid rgba(216, 199, 176, 0.28);
+  border: 3px solid rgba(226, 232, 240, 0.95);
   border-top: 3px solid var(--color-accent);
   border-radius: 50%;
   width: 30px;
@@ -277,18 +277,18 @@ tbody tr:hover {
 }
 
 .error-message {
-  background: rgba(168, 77, 63, 0.18);
-  border: 1px solid rgba(168, 77, 63, 0.72);
-  color: #f0b3aa;
+  background: rgba(220, 38, 38, 0.08);
+  border: 1px solid rgba(220, 38, 38, 0.28);
+  color: #dc2626;
   padding: 14px 16px;
   border-radius: var(--radius-md);
   margin-bottom: 20px;
 }
 
 .success-message {
-  background: rgba(104, 122, 70, 0.22);
-  border: 1px solid rgba(104, 122, 70, 0.78);
-  color: #dfe8c6;
+  background: rgba(22, 163, 74, 0.10);
+  border: 1px solid rgba(22, 163, 74, 0.24);
+  color: #16a34a;
   padding: 14px 16px;
   border-radius: var(--radius-md);
   margin-bottom: 20px;
@@ -304,4 +304,347 @@ tbody tr:hover {
     margin-left: 0;
     padding-top: 74px;
   }
+}
+
+
+/* Tổng thể sáng hơn và mềm hơn cho bản hoàn thiện */
+select option {
+  background: var(--color-bg-deep);
+  color: var(--color-text);
+}
+
+button,
+.button,
+.primary-button,
+.staff-primary-btn,
+.staff-submit-btn,
+.tutor-primary,
+.tutor-submit,
+.outline-btn,
+.nav-link,
+.nav-account-btn,
+.nav-logout {
+  border-radius: 10px;
+}
+
+.card,
+.admin-stat,
+.stat-card,
+.chart-card,
+.table-card,
+.staff-card,
+.staff-form-card,
+.tutor-card,
+.teaching-card,
+.suggest-card,
+.parent-notice,
+.form-modal,
+.modal-card,
+.account-modal-card,
+.finance-payment-modal {
+  border-radius: 18px;
+}
+
+/* ===== FINAL LIGHT BLUE THEME OVERRIDES ===== */
+:root {
+  --color-bg: #f8fafc;
+  --color-bg-deep: #ffffff;
+  --color-surface: #ffffff;
+  --color-surface-2: #f1f5f9;
+  --color-surface-3: #eff6ff;
+  --color-text: #0f172a;
+  --color-text-dark: #0f172a;
+  --color-muted: #64748b;
+  --color-border: #e2e8f0;
+  --color-accent: #2563eb;
+  --color-accent-2: #1d4ed8;
+  --color-danger: #dc2626;
+  --color-success: #16a34a;
+  --color-warning: #f59e0b;
+  --color-charcoal: #ffffff;
+  --card-shadow: 0 10px 28px rgba(15, 23, 42, 0.07);
+  --hover-blue: #dbeafe;
+}
+
+html,
+body,
+#root,
+.App {
+  background: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+.App {
+  background:
+    radial-gradient(circle at top right, rgba(37, 99, 235, 0.08), transparent 34rem),
+    linear-gradient(135deg, #f8fafc 0%, #ffffff 46%, #eff6ff 100%) !important;
+}
+
+.app-layout,
+.login-layout {
+  background: transparent !important;
+}
+
+.card,
+.admin-stat,
+.stat-card,
+.chart-card,
+.table-card,
+.staff-card,
+.staff-form-card,
+.tutor-card,
+.teaching-card,
+.suggest-card,
+.parent-notice,
+.form-modal,
+.modal-card,
+.account-modal-card,
+.finance-payment-modal,
+.student-card,
+.parent-tutor-card,
+.review-item-new,
+.review-form-card,
+.parent-form-card,
+.student-management-card {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: var(--card-shadow) !important;
+}
+
+button,
+.button,
+.primary-button,
+.staff-primary-btn,
+.staff-submit-btn,
+.tutor-primary,
+.tutor-submit,
+.outline-btn,
+.nav-link,
+.nav-account-btn,
+.nav-logout,
+.tab-button,
+.finance-action-btn,
+.student-session-button {
+  border-radius: 12px !important;
+}
+
+.button-primary,
+.primary-button,
+.staff-primary-btn,
+.staff-submit-btn,
+.tutor-primary,
+.tutor-submit,
+.register-submit,
+.login-button,
+.finance-action-btn.primary,
+.tab-button.active {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+}
+
+.button-primary:hover,
+.primary-button:hover,
+.staff-primary-btn:hover,
+.staff-submit-btn:hover,
+.tutor-primary:hover,
+.tutor-submit:hover,
+.register-submit:hover:not(:disabled),
+.login-button:hover,
+.finance-action-btn.primary:hover,
+.tab-button.active:hover {
+  background: #1d4ed8 !important;
+  border-color: #1d4ed8 !important;
+  color: #ffffff !important;
+}
+
+.button-secondary,
+.outline-btn,
+.tutor-muted-btn,
+.secondary-button,
+.form-modal-actions .secondary,
+.button.secondary,
+.finance-action-btn.secondary,
+.tab-button {
+  background: #ffffff !important;
+  color: #1d4ed8 !important;
+  border-color: #bfdbfe !important;
+}
+
+.button-secondary:hover,
+.outline-btn:hover,
+.tutor-muted-btn:hover,
+.secondary-button:hover,
+.form-modal-actions .secondary:hover,
+.button.secondary:hover,
+.finance-action-btn.secondary:hover,
+.tab-button:hover {
+  background: #dbeafe !important;
+  color: #1e40af !important;
+  border-color: #93c5fd !important;
+}
+
+.button-danger,
+.icon-button.danger,
+.staff-icon-btn.danger,
+.danger-text,
+.more-actions-menu button.danger,
+.floating-actions-menu button.danger {
+  color: #dc2626 !important;
+  border-color: rgba(220, 38, 38, 0.28) !important;
+}
+
+.button-danger:hover,
+.icon-button.danger:hover,
+.staff-icon-btn.danger:hover {
+  background: #dc2626 !important;
+  color: #ffffff !important;
+  border-color: #dc2626 !important;
+}
+
+input,
+select,
+textarea,
+.form-group input,
+.form-group select,
+.form-group textarea,
+.search-box input,
+.admin-select,
+.page-size-control select,
+.action-buttons select,
+.form-grid input,
+.form-grid select,
+.form-grid textarea,
+.register-field input,
+.register-field select,
+.register-field textarea,
+.parent-field input,
+.parent-field select,
+.parent-field textarea,
+.profile-card input,
+.profile-textarea,
+.staff-textarea {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+  border-radius: 12px !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus,
+.search-box input:focus,
+.admin-select:focus,
+.page-size-control select:focus,
+.action-buttons select:focus,
+.form-grid input:focus,
+.form-grid select:focus,
+.form-grid textarea:focus,
+.register-field input:focus,
+.register-field select:focus,
+.register-field textarea:focus {
+  border-color: #2563eb !important;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12) !important;
+  outline: none !important;
+}
+
+::placeholder {
+  color: #94a3b8 !important;
+}
+
+select option {
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
+
+table,
+.admin-table,
+.staff-table,
+.tutor-table-new,
+.payment-table,
+.compact-table {
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
+
+thead,
+.admin-table th,
+.list-container th,
+.staff-table th,
+.tutor-table-new th,
+.payment-table th,
+.compact-table th {
+  background: #f1f5f9 !important;
+  color: #1d4ed8 !important;
+  border-color: #e2e8f0 !important;
+}
+
+td,
+.admin-table td,
+.list-container td,
+.staff-table td,
+.tutor-table-new td,
+.payment-table td,
+.compact-table td {
+  color: #0f172a !important;
+  border-color: #e2e8f0 !important;
+}
+
+tbody tr:hover,
+.admin-table tbody tr:hover,
+.list-container tbody tr:hover,
+.staff-table tbody tr:hover,
+.tutor-table-new tbody tr:hover,
+.payment-table tbody tr:hover {
+  background: #eff6ff !important;
+}
+
+.status-badge,
+.role-badge,
+.tag,
+.mini-tag,
+.timetable-pill,
+.tutor-badge,
+.subject-pill {
+  border-radius: 999px !important;
+  border-width: 1px !important;
+}
+
+.status-badge.active,
+.status-green,
+.role-tutor,
+.green-text,
+.money-green {
+  color: #15803d !important;
+}
+
+.status-badge.locked,
+.status-red,
+.role-admin {
+  color: #dc2626 !important;
+}
+
+.status-yellow,
+.status-orange,
+.status-purple,
+.status-blue,
+.role-staff,
+.role-student {
+  color: #1d4ed8 !important;
+}
+
+.error-message {
+  background: #fef2f2 !important;
+  color: #b91c1c !important;
+  border-color: #fecaca !important;
+}
+
+.success-message {
+  background: #f0fdf4 !important;
+  color: #15803d !important;
+  border-color: #bbf7d0 !important;
 }

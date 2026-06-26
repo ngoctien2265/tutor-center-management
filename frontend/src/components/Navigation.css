@@ -12,7 +12,7 @@
 
 .nav-brand {
   padding: 34px 24px 28px;
-  border-bottom: 2px solid rgba(216, 199, 176, 0.42);
+  border-bottom: 2px solid rgba(226, 232, 240, 0.95);
 }
 
 .nav-brand h1 {
@@ -62,9 +62,9 @@
 }
 
 .nav-link:hover {
-  background: rgba(216, 199, 176, 0.08);
+  background: rgba(37, 99, 235, 0.08);
   color: var(--color-text);
-  border-color: rgba(216, 199, 176, 0.35);
+  border-color: rgba(37, 99, 235, 0.18);
 }
 
 .nav-link.active {
@@ -87,7 +87,7 @@
 .nav-footer {
   margin-top: auto;
   padding: 18px 14px;
-  border-top: 2px solid rgba(216, 199, 176, 0.42);
+  border-top: 2px solid rgba(226, 232, 240, 0.95);
 }
 
 .nav-logout {
@@ -143,7 +143,7 @@
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background: rgba(10, 8, 6, 0.78);
+  background: rgba(15, 23, 42, 0.45);
 }
 
 .account-modal-card {
@@ -232,9 +232,9 @@
 
 .account-info-grid input {
   min-height: 46px;
-  border: 1px solid rgba(216, 199, 176, 0.42);
+  border: 1px solid rgba(226, 232, 240, 0.95);
   border-radius: 0;
-  background: rgba(21, 21, 21, 0.42);
+  background: #ffffff;
   padding: 0 14px;
   color: var(--color-text);
   font: inherit;
@@ -289,4 +289,226 @@
 @media (max-width: 760px) {
   .account-info-grid { grid-template-columns: 1fr; }
   .account-modal-card { padding: 24px; }
+}
+
+/* Bản hoàn thiện: thêm logo hệ thống và làm panel mềm hơn */
+.navigation.admin-sidebar {
+  box-shadow: 10px 0 34px rgba(15, 23, 42, 0.08);
+}
+
+.brand-logo-row {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+}
+
+.brand-logo-mark {
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--color-accent-2);
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--color-accent), var(--color-accent-2));
+  color: var(--color-charcoal);
+  font-family: var(--font-heading);
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+}
+
+.brand-logo-row span {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--color-accent-2);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.nav-brand h1,
+.account-modal-head h2 {
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+}
+
+.nav-link,
+.nav-account-btn,
+.nav-logout {
+  text-transform: none;
+  letter-spacing: 0.01em;
+}
+
+.account-info-grid input:not(:disabled) {
+  background: rgba(37, 99, 235, 0.08);
+  border-color: rgba(37, 99, 235, 0.24);
+}
+
+.account-info-grid input:not(:disabled):focus {
+  outline: none;
+  border-color: var(--color-accent-2);
+  background: rgba(37, 99, 235, 0.10);
+}
+
+.account-full-row {
+  grid-column: 1 / -1;
+}
+
+.account-modal-actions {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.account-modal-ok,
+.account-modal-secondary {
+  width: 100%;
+  min-height: 48px;
+  margin-top: 0;
+  border-radius: 10px;
+}
+
+.account-modal-secondary {
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text);
+  font-family: var(--font-label);
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.account-modal-secondary:hover {
+  background: var(--color-text);
+  color: var(--color-charcoal);
+}
+
+@media (max-width: 760px) {
+  .account-modal-actions { grid-template-columns: 1fr; }
+}
+
+/* Logo hệ thống thay cho chữ TC, dùng chung cho admin/staff/tutor/student */
+.brand-logo-mark {
+  overflow: hidden;
+  padding: 5px;
+  background: #eff6ff;
+}
+
+.brand-logo-mark img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* ===== FINAL LIGHT SIDEBAR THEME ===== */
+.navigation.admin-sidebar {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border-right: 1px solid #e2e8f0 !important;
+  box-shadow: 8px 0 30px rgba(15, 23, 42, 0.06) !important;
+}
+
+.nav-brand {
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+.nav-brand h1,
+.nav-panel-title,
+.nav-role-title,
+.nav-user-name {
+  color: #0f172a !important;
+}
+
+.nav-brand p,
+.nav-user-greeting,
+.nav-system-label,
+.nav-user-subtitle {
+  color: #64748b !important;
+}
+
+.nav-link {
+  color: #475569 !important;
+  background: transparent !important;
+  border-color: transparent !important;
+}
+
+.nav-link:hover {
+  background: #eff6ff !important;
+  color: #1d4ed8 !important;
+  border-color: #bfdbfe !important;
+}
+
+.nav-link.active {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 10px 18px rgba(37, 99, 235, 0.18) !important;
+}
+
+.nav-footer {
+  border-top: 1px solid #e2e8f0 !important;
+}
+
+.nav-logout,
+.nav-account-btn {
+  background: #ffffff !important;
+  color: #1d4ed8 !important;
+  border-color: #bfdbfe !important;
+}
+
+.nav-logout:hover,
+.nav-account-btn:hover {
+  background: #dbeafe !important;
+  color: #1e40af !important;
+}
+
+.brand-logo-mark {
+  background: #eff6ff !important;
+  border: 1px solid #bfdbfe !important;
+}
+
+.account-modal-backdrop {
+  background: rgba(15, 23, 42, 0.45) !important;
+}
+
+.account-modal-card {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #e2e8f0 !important;
+  border-radius: 20px !important;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.22) !important;
+}
+
+.account-modal-head h2,
+.account-info-item strong,
+.account-modal-card label {
+  color: #0f172a !important;
+}
+
+.account-modal-head p,
+.account-info-item span {
+  color: #64748b !important;
+}
+
+.account-avatar {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+  border-radius: 18px !important;
+}
+
+.account-modal-close,
+.account-modal-secondary {
+  background: #ffffff !important;
+  color: #1d4ed8 !important;
+  border-color: #bfdbfe !important;
+}
+
+.account-modal-close:hover,
+.account-modal-secondary:hover {
+  background: #dbeafe !important;
+  color: #1e40af !important;
 }

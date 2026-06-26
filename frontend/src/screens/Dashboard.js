@@ -109,10 +109,6 @@ function Dashboard() {
   const labels = charts.labels || financeCharts.labels || ['T1', 'T2', 'T3', 'T4', 'T5', 'T6'];
   const overview = charts.overview || { labels: ['Tổng số gia sư', 'Tổng số học viên', 'Lớp đang hoạt động'], values: [totals.tutors || 0, totals.students || 0, totals.activeClasses || 0] };
   const topTutors = dashboard?.topTutors || [];
-  const subjectLabels = (charts.subjectDistribution || []).map((item) => item.subject_name || 'Chưa cập nhật');
-  const subjectValues = (charts.subjectDistribution || []).map((item) => item.count || 0);
-  const gradeLabels = (charts.gradeDistribution || []).map((item) => item.grade_level || 'Chưa cập nhật');
-  const gradeValues = (charts.gradeDistribution || []).map((item) => item.count || 0);
 
   return (
     <main className="dashboard-container">
@@ -142,17 +138,6 @@ function Dashboard() {
               </div>
             )) : <p className="muted">Chưa có dữ liệu đánh giá gia sư.</p>}
           </div>
-        </article>
-      </section>
-
-      <section className="panel-grid-2">
-        <article className="chart-card">
-          <h2>Phân bố môn học trong hệ thống</h2>
-          <BarChart labels={subjectLabels} values={subjectValues} color="#0ea5e9" />
-        </article>
-        <article className="chart-card">
-          <h2>Phân bố lớp trong hệ thống</h2>
-          <DonutChart labels={gradeLabels} values={gradeValues} />
         </article>
       </section>
     </main>

@@ -181,23 +181,32 @@ function InfoTab({ selectedClass, weekStart, setWeekStart, weekDays, classSessio
 function WeeklyTimetable({ weekDays, classSessions, classTitle }) {
   const hours = Array.from({ length: 16 }, (_, i) => i + 7);
   return <div className="table-shell weekly-calendar-shell">
-    <div className="timetable-grid weekly-calendar-grid" style={{ gridTemplateColumns: `84px repeat(${weekDays.length}, minmax(120px, 1fr))` }}>
-      <div className="timetable-header-cell corner" />
-      {weekDays.map((day) => <div key={day.code} className="timetable-header-cell day-header"><strong>{day.label}</strong><span>{day.dateLabel}</span></div>)}
-      {hours.map((hour) => <React.Fragment key={hour}>
-        <div className="timetable-hour-cell">{String(hour).padStart(2, '0')}:00</div>
-        {weekDays.map((day) => {
-          const currentStart = hour * 60;
-          const currentEnd = (hour + 1) * 60;
-          const session = classSessions.find((item) => item.dateKey === day.dateKey && item.start < currentEnd && item.end > currentStart);
-          return <div key={`${day.code}-${hour}`} className={session ? 'timetable-cell state-class weekly-class-cell' : 'timetable-cell state-empty'}>
-            {session && <div className="cell-class-label"><strong>{classTitle}</strong><small>Buổi {session.sessionNumber}: {timeFromMinutes(session.start)}-{timeFromMinutes(session.end)}</small></div>}
+    <div className="timetable-grid weekly-calendar-grid class-detail-weekly-grid" style={{ gridTemplateColumns: `84px repeat(${weekDays.length}, minmax(130px, 1fr))`, gridTemplateRows: `auto repeat(${hours.length}, minmax(42px, 1fr))` }}>
+      <div className="timetable-header-cell corner" style={{ gridColumn: 1, gridRow: 1 }} />
+      {weekDays.map((day, dayIndex) => <div key={day.code} className="timetable-header-cell day-header" style={{ gridColumn: dayIndex + 2, gridRow: 1 }}><strong>{day.label}</strong><span>{day.dateLabel}</span></div>)}
+      {hours.map((hour, hourIndex) => <div key={`h-${hour}`} className="timetable-hour-cell" style={{ gridColumn: 1, gridRow: hourIndex + 2 }}>{String(hour).padStart(2, '0')}:00</div>)}
+      {weekDays.flatMap((day, dayIndex) => hours.flatMap((hour, hourIndex) => {
+        const currentStart = hour * 60;
+        const currentEnd = (hour + 1) * 60;
+        const startedSessions = classSessions.filter((item) => item.dateKey === day.dateKey && item.start >= currentStart && item.start < currentEnd);
+        const coveredByPrevious = classSessions.some((item) => item.dateKey === day.dateKey && item.start < currentStart && item.end > currentStart);
+        if (!startedSessions.length) {
+          if (coveredByPrevious) return [];
+          return <div key={`${day.code}-${hour}`} className="timetable-cell state-empty" style={{ gridColumn: dayIndex + 2, gridRow: hourIndex + 2 }} />;
+        }
+        return startedSessions.map((session) => {
+          const rowStart = Math.max(0, Math.floor((session.start - 7 * 60) / 60));
+          const rowEnd = Math.min(hours.length, Math.ceil((session.end - 7 * 60) / 60));
+          const rowSpan = Math.max(1, rowEnd - rowStart);
+          return <div key={`${day.code}-${session.sessionNumber}`} className="timetable-cell state-class weekly-class-cell merged-class-cell" style={{ gridColumn: dayIndex + 2, gridRow: `${rowStart + 2} / span ${rowSpan}` }}>
+            <div className="cell-class-label"><strong>{classTitle}</strong><small>Buổi {session.sessionNumber}: {timeFromMinutes(session.start)}-{timeFromMinutes(session.end)}</small></div>
           </div>;
-        })}
-      </React.Fragment>)}
+        });
+      }))}
     </div>
   </div>;
 }
+
 
 function InvoicesTab({ invoices, openQrPayment }) {
   return <section className="tutor-card">

@@ -77,7 +77,7 @@ function Login({ onLoginSuccess }) {
   return (
     <div className="login-container">
       <div className="login-card">
-        <h1 className="login-title">Hệ thống quản lý gia sư</h1>
+        <h1 className="login-title"><span>Hệ thống quản lý</span><span>Gia sư</span></h1>
         <p className="login-subtitle">Đăng nhập tài khoản</p>
 
         <form onSubmit={handleSubmit} className="login-form">
@@ -120,16 +120,6 @@ function Login({ onLoginSuccess }) {
           <Link href="/register/tutor">Đăng ký gia sư</Link>
           <Link href="/register/staff">Đăng ký nhân viên</Link>
         </div>
-
-        <p className="login-info">
-          Tài khoản demo:
-          <br />
-          <strong>Quản trị viên:</strong> admin / admin123
-          <br />
-          <strong>Gia sư:</strong> tutor_1 / tutor123
-          <br />
-          <strong>Học viên:</strong> student1 / student123
-        </p>
       </div>
     </div>
   );

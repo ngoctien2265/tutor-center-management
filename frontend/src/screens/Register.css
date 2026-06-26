@@ -3,9 +3,9 @@
   width: 100%;
   padding: 28px;
   background:
-    linear-gradient(90deg, rgba(216, 199, 176, 0.035) 1px, transparent 1px),
-    linear-gradient(rgba(216, 199, 176, 0.03) 1px, transparent 1px),
-    radial-gradient(circle at top right, rgba(201, 154, 74, 0.18), transparent 32rem),
+    linear-gradient(90deg, rgba(226, 232, 240, 0.45) 1px, transparent 1px),
+    linear-gradient(rgba(226, 232, 240, 0.45) 1px, transparent 1px),
+    radial-gradient(circle at top right, rgba(37, 99, 235, 0.12), transparent 32rem),
     var(--color-bg);
   background-size: 42px 42px, 42px 42px, auto, auto;
   color: var(--color-text);
@@ -50,7 +50,7 @@
 .register-heading span {
   display: inline-flex;
   width: max-content;
-  background: rgba(201, 154, 74, 0.16);
+  background: rgba(37, 99, 235, 0.10);
   color: var(--color-accent-2);
   border: 1px solid var(--color-accent);
   border-radius: 0;
@@ -79,11 +79,11 @@
 }
 
 .register-section {
-  border: 1px solid rgba(216, 199, 176, 0.45);
+  border: 1px solid rgba(226, 232, 240, 0.95);
   border-radius: 0;
   padding: 20px;
   margin-bottom: 18px;
-  background: rgba(21, 21, 21, 0.18);
+  background: rgba(248, 250, 252, 0.95);
 }
 
 .register-section h2 {
@@ -124,9 +124,9 @@
 .register-field select,
 .register-field textarea {
   width: 100%;
-  border: 1px solid rgba(216, 199, 176, 0.45);
+  border: 1px solid rgba(226, 232, 240, 0.95);
   border-radius: 0;
-  background: rgba(21, 21, 21, 0.42);
+  background: #ffffff;
   padding: 12px 14px;
   color: var(--color-text);
   transition: border-color 0.15s ease, background 0.15s ease;
@@ -142,7 +142,7 @@
 .register-field textarea:focus {
   outline: none;
   border-color: var(--color-accent);
-  background: rgba(21, 21, 21, 0.72);
+  background: #ffffff;
 }
 
 .register-actions {
@@ -191,4 +191,49 @@
   .register-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* ===== FINAL LIGHT REGISTER THEME ===== */
+.register-page {
+  background:
+    radial-gradient(circle at top right, rgba(37, 99, 235, 0.12), transparent 32rem),
+    linear-gradient(135deg, #f8fafc 0%, #ffffff 52%, #eff6ff 100%) !important;
+  color: #0f172a !important;
+}
+
+.register-card,
+.register-section {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #e2e8f0 !important;
+  border-radius: 22px !important;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.07) !important;
+}
+
+.register-section {
+  background: #f8fafc !important;
+  box-shadow: none !important;
+}
+
+.register-heading h1,
+.register-section h2 {
+  color: #0f172a !important;
+  letter-spacing: -0.04em !important;
+}
+
+.register-heading span {
+  background: #dbeafe !important;
+  color: #1d4ed8 !important;
+  border-color: #bfdbfe !important;
+  border-radius: 999px !important;
+}
+
+.register-heading p,
+.register-field label {
+  color: #64748b !important;
+}
+
+.register-topbar a,
+.register-actions a {
+  color: #1d4ed8 !important;
 }

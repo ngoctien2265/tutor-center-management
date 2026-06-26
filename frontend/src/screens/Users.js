@@ -27,7 +27,9 @@ function roleClass(role) {
 }
 
 function approvalText(status) {
-  return status === 'active' ? 'Đã duyệt' : 'Chờ duyệt';
+  if (status === 'active') return 'Đã duyệt';
+  if (status === 'rejected') return 'Không duyệt';
+  return 'Chờ duyệt';
 }
 
 function approvalClass(status) {
@@ -79,7 +81,7 @@ function Users() {
   const [query, setQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [openActionsId, setOpenActionsId] = useState(null);
+  const [openActions, setOpenActions] = useState(null);
   const [modalMode, setModalMode] = useState(null);
   const [form, setForm] = useState(emptyForm);
 
@@ -193,6 +195,23 @@ function Users() {
     }
   };
 
+  const openFloatingActions = (event, user) => {
+    if (openActions?.id === user.id) {
+      setOpenActions(null);
+      return;
+    }
+    const rect = event.currentTarget.getBoundingClientRect();
+    const menuHeight = 236;
+    const top = rect.bottom + menuHeight > window.innerHeight ? Math.max(12, rect.top - menuHeight - 8) : rect.bottom + 8;
+    const left = Math.min(window.innerWidth - 236, Math.max(12, rect.right - 220));
+    setOpenActions({ id: user.id, user, top, left });
+  };
+
+  const runAction = (callback) => {
+    setOpenActions(null);
+    callback();
+  };
+
   return (
     <main className="list-container">
       <h1>Quản lý tài khoản</h1>
@@ -239,22 +258,22 @@ function Users() {
                 </td>
                 <td>{user.date_joined ? new Date(user.date_joined).toLocaleDateString('vi-VN') : '-'}</td>
                 <td className="action-buttons more-actions-cell">
-                  <button className="icon-button" title="Thêm thao tác" onClick={() => setOpenActionsId(openActionsId === user.id ? null : user.id)}>⋯</button>
-                  {openActionsId === user.id && (
-                    <div className="more-actions-menu">
-                      <button onClick={() => { openEdit(user); setOpenActionsId(null); }}>Xem / sửa</button>
-                      <button onClick={() => { approveAccount(user); setOpenActionsId(null); }}>Duyệt tài khoản</button>
-                      <button onClick={() => { rejectAccount(user); setOpenActionsId(null); }}>Không duyệt / hủy duyệt</button>
-                      <button onClick={() => { toggleAccount(user); setOpenActionsId(null); }}>{user.is_active ? 'Khóa đăng nhập' : 'Mở đăng nhập'}</button>
-                      {user.role !== 'admin' && <button className="danger" onClick={() => { deleteAccount(user); setOpenActionsId(null); }}>Xóa tài khoản</button>}
-                    </div>
-                  )}
+                  <button className="icon-button" title="Thêm thao tác" onClick={(event) => openFloatingActions(event, user)}>⋯</button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </section>
+      {openActions && (
+        <div className="floating-actions-menu" style={{ top: openActions.top, left: openActions.left }}>
+          <button onClick={() => runAction(() => openEdit(openActions.user))}>Xem / sửa</button>
+          <button onClick={() => runAction(() => approveAccount(openActions.user))}>Duyệt tài khoản</button>
+          <button onClick={() => runAction(() => rejectAccount(openActions.user))}>Không duyệt</button>
+          <button onClick={() => runAction(() => toggleAccount(openActions.user))}>{openActions.user.is_active ? 'Khóa đăng nhập' : 'Mở đăng nhập'}</button>
+          {openActions.user.role !== 'admin' && <button className="danger" onClick={() => runAction(() => deleteAccount(openActions.user))}>Xóa tài khoản</button>}
+        </div>
+      )}
       <AccountModal mode={modalMode} form={form} setForm={setForm} onClose={() => setModalMode(null)} onSubmit={submitForm} />
     </main>
   );

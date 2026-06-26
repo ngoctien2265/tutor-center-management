@@ -30,9 +30,9 @@
 .action-buttons select {
   width: 100%;
   height: 46px;
-  border: 1px solid rgba(216, 199, 176, 0.45);
+  border: 1px solid rgba(226, 232, 240, 0.95);
   border-radius: 0;
-  background: rgba(21, 21, 21, 0.42);
+  background: #ffffff;
   color: var(--color-text);
   padding: 0 14px;
   outline: none;
@@ -44,7 +44,7 @@
 .page-size-control select:focus,
 .action-buttons select:focus {
   border-color: var(--color-accent);
-  background: rgba(21, 21, 21, 0.72);
+  background: #ffffff;
 }
 
 .search-box input { padding-left: 46px; }
@@ -82,7 +82,7 @@
   width: 100%;
   min-width: 840px;
   border-collapse: collapse;
-  border: 2px solid rgba(216, 199, 176, 0.5);
+  border: 2px solid rgba(226, 232, 240, 1);
   border-radius: 0;
   overflow: hidden;
 }
@@ -93,13 +93,13 @@
 .list-container td {
   padding: 15px 16px;
   text-align: left;
-  border-bottom: 1px solid rgba(216, 199, 176, 0.24);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.95);
   vertical-align: middle;
 }
 
 .admin-table th,
 .list-container th {
-  background: rgba(21, 21, 21, 0.55);
+  background: #f1f5f9;
   color: var(--color-accent-2);
   font-family: var(--font-label);
   font-size: 11px;
@@ -116,7 +116,7 @@
 
 .admin-table tbody tr:hover,
 .list-container tbody tr:hover {
-  background: rgba(245, 239, 230, 0.05);
+  background: rgba(37, 99, 235, 0.04);
 }
 
 .admin-table tr:last-child td,
@@ -142,16 +142,16 @@
 
 .status-badge.active,
 .status-green,
-.role-tutor { background: rgba(104, 122, 70, 0.24); color: #dfe8c6; }
+.role-tutor { background: rgba(22, 163, 74, 0.10); color: #16a34a; }
 .status-badge.locked,
 .status-red,
-.role-admin { background: rgba(168, 77, 63, 0.24); color: #f0b3aa; }
+.role-admin { background: rgba(220, 38, 38, 0.10); color: #dc2626; }
 .status-yellow,
 .status-blue,
 .status-orange,
 .status-purple,
 .role-staff,
-.role-student { background: rgba(201, 154, 74, 0.16); color: var(--color-accent-2); }
+.role-student { background: rgba(37, 99, 235, 0.10); color: var(--color-accent-2); }
 
 .action-buttons {
   display: flex;
@@ -180,8 +180,8 @@ td .button {
 .icon-button:hover,
 .action-buttons .button:hover,
 td .button:hover { background: var(--color-text); color: var(--color-charcoal); }
-.icon-button.success { color: #dfe8c6; }
-.icon-button.danger { color: #f0b3aa; }
+.icon-button.success { color: #16a34a; }
+.icon-button.danger { color: #dc2626; }
 .icon-button.primary { color: var(--color-accent-2); }
 .icon-button.primary:hover { background: var(--color-text); border-color: var(--color-text); color: var(--color-charcoal); }
 
@@ -234,7 +234,7 @@ td .button:hover { background: var(--color-text); color: var(--color-charcoal); 
   position: fixed;
   inset: 0;
   z-index: 1000;
-  background: rgba(10, 8, 6, 0.78);
+  background: rgba(15, 23, 42, 0.45);
   display: grid;
   place-items: center;
   padding: 24px;
@@ -294,9 +294,9 @@ td .button:hover { background: var(--color-text); color: var(--color-charcoal); 
 .form-grid textarea {
   width: 100%;
   min-height: 46px;
-  border: 1px solid rgba(216, 199, 176, 0.45);
+  border: 1px solid rgba(226, 232, 240, 0.95);
   border-radius: 0;
-  background: rgba(21, 21, 21, 0.42);
+  background: #ffffff;
   color: var(--color-text);
   padding: 0 14px;
   outline: none;
@@ -309,7 +309,7 @@ td .button:hover { background: var(--color-text); color: var(--color-charcoal); 
 .form-grid select:disabled,
 .profile-readonly-grid input:disabled {
   color: var(--color-muted);
-  background: rgba(21, 21, 21, 0.26);
+  background: rgba(241, 245, 249, 0.95);
   cursor: not-allowed;
   font-weight: 650;
 }
@@ -353,7 +353,7 @@ td .button:hover { background: var(--color-text); color: var(--color-charcoal); 
   align-items: center;
   gap: 16px;
   padding: 14px 0;
-  border-bottom: 1px solid rgba(216, 199, 176, 0.24);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.95);
   color: var(--color-muted);
 }
 
@@ -395,7 +395,7 @@ td .button:hover { background: var(--color-text); color: var(--color-charcoal); 
   min-height: 42px;
   padding: 0 14px;
   border: 0;
-  border-bottom: 1px solid rgba(216, 199, 176, 0.28);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.95);
   background: transparent;
   color: var(--color-text);
   text-align: left;
@@ -409,11 +409,11 @@ td .button:hover { background: var(--color-text); color: var(--color-charcoal); 
 }
 
 .more-actions-menu button:hover {
-  background: rgba(216, 199, 176, 0.08);
+  background: rgba(37, 99, 235, 0.08);
 }
 
 .more-actions-menu button.danger {
-  color: #f0b3aa;
+  color: #dc2626;
 }
 
 @media (max-width: 900px) {
@@ -424,4 +424,128 @@ td .button:hover { background: var(--color-text); color: var(--color-charcoal); 
 @media (max-width: 760px) {
   .admin-toolbar { align-items: stretch; }
   .primary-button { width: 100%; }
+}
+
+.floating-actions-menu {
+  position: fixed;
+  z-index: 3000;
+  display: grid;
+  width: 220px;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-bg-deep);
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.12);
+}
+
+.floating-actions-menu button {
+  width: 100%;
+  min-height: 42px;
+  padding: 0 14px;
+  border: 0;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.95);
+  background: transparent;
+  color: var(--color-text);
+  text-align: left;
+  font-family: var(--font-label);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.floating-actions-menu button:last-child { border-bottom: 0; }
+.floating-actions-menu button:hover { background: rgba(37, 99, 235, 0.08); }
+.floating-actions-menu button.danger { color: #dc2626; }
+
+/* ===== FINAL LIGHT LIST/TABLE THEME ===== */
+.search-box input,
+.admin-select,
+.page-size-control select,
+.action-buttons select,
+.form-grid input,
+.form-grid select,
+.form-grid textarea {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+
+.search-box::before {
+  color: #2563eb !important;
+}
+
+.table-card,
+.list-container .card,
+.form-modal,
+.profile-modal {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.07) !important;
+}
+
+.admin-table,
+.list-container table {
+  border-color: #e2e8f0 !important;
+  background: #ffffff !important;
+}
+
+.admin-table th,
+.list-container th {
+  background: #f1f5f9 !important;
+  color: #1d4ed8 !important;
+}
+
+.admin-table td,
+.list-container td {
+  color: #0f172a !important;
+  border-color: #e2e8f0 !important;
+}
+
+.admin-table tbody tr:hover,
+.list-container tbody tr:hover {
+  background: #eff6ff !important;
+}
+
+.status-badge.active,
+.status-green,
+.role-tutor {
+  background: #dcfce7 !important;
+  color: #15803d !important;
+  border-color: #bbf7d0 !important;
+}
+
+.status-badge.locked,
+.status-red,
+.role-admin {
+  background: #fef2f2 !important;
+  color: #dc2626 !important;
+  border-color: #fecaca !important;
+}
+
+.status-yellow,
+.status-blue,
+.status-orange,
+.status-purple,
+.role-staff,
+.role-student {
+  background: #dbeafe !important;
+  color: #1d4ed8 !important;
+  border-color: #bfdbfe !important;
+}
+
+.more-actions-menu,
+.floating-actions-menu {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+
+.more-actions-menu button,
+.floating-actions-menu button {
+  color: #0f172a !important;
+  border-bottom-color: #e2e8f0 !important;
+}
+
+.more-actions-menu button:hover,
+.floating-actions-menu button:hover {
+  background: #eff6ff !important;
+  color: #1d4ed8 !important;
 }

@@ -6,9 +6,9 @@
   width: 100%;
   padding: 24px;
   background:
-    linear-gradient(90deg, rgba(216, 199, 176, 0.035) 1px, transparent 1px),
-    linear-gradient(rgba(216, 199, 176, 0.03) 1px, transparent 1px),
-    radial-gradient(circle at 15% 5%, rgba(201, 154, 74, 0.22), transparent 32rem),
+    linear-gradient(90deg, rgba(226, 232, 240, 0.45) 1px, transparent 1px),
+    linear-gradient(rgba(226, 232, 240, 0.45) 1px, transparent 1px),
+    radial-gradient(circle at 15% 5%, rgba(37, 99, 235, 0.12), transparent 32rem),
     var(--color-bg);
   background-size: 42px 42px, 42px 42px, auto, auto;
 }
@@ -29,7 +29,7 @@
   position: absolute;
   left: -18px;
   top: -42px;
-  color: rgba(224, 183, 109, 0.2);
+  color: rgba(37, 99, 235, 0.10);
   font-family: var(--font-heading);
   font-size: 48px;
   line-height: 0.85;
@@ -94,9 +94,9 @@
 .login-info {
   margin-top: 22px;
   padding: 16px;
-  border: 1px solid rgba(201, 154, 74, 0.58);
+  border: 1px solid rgba(37, 99, 235, 0.24);
   border-radius: 0;
-  background: rgba(201, 154, 74, 0.12);
+  background: rgba(37, 99, 235, 0.08);
   color: var(--color-muted);
   font-size: 13px;
   line-height: 1.7;
@@ -116,4 +116,69 @@
     left: 0;
     top: -30px;
   }
+}
+
+/* Cố định tiêu đề login thành 2 dòng: "Hệ thống quản lý" / "Gia sư" */
+.login-title span {
+  display: block;
+  white-space: nowrap;
+}
+
+.login-title span:last-child {
+  margin-top: 4px;
+}
+
+@media (max-width: 560px) {
+  .login-title {
+    font-size: 30px;
+  }
+}
+
+/* ===== FINAL LIGHT LOGIN THEME ===== */
+.login-container {
+  background:
+    radial-gradient(circle at top left, rgba(37, 99, 235, 0.12), transparent 30rem),
+    linear-gradient(135deg, #f8fafc 0%, #ffffff 52%, #eff6ff 100%) !important;
+  color: #0f172a !important;
+}
+
+.login-card {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 28px !important;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.14) !important;
+}
+
+.login-card::before {
+  color: rgba(37, 99, 235, 0.08) !important;
+}
+
+.login-title {
+  color: #0f172a !important;
+  letter-spacing: -0.045em !important;
+}
+
+.login-title span:last-child {
+  color: #2563eb !important;
+}
+
+.login-subtitle,
+.login-info {
+  color: #64748b !important;
+}
+
+.login-register-links a,
+.login-info strong {
+  color: #1d4ed8 !important;
+}
+
+.login-register-links a:hover {
+  color: #2563eb !important;
+}
+
+.login-info {
+  background: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  border-radius: 16px !important;
 }

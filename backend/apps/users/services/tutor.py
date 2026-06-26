@@ -49,10 +49,14 @@ class TutorService:
         upcoming = []
         for class_obj in active_qs.filter(status__in=['assigned', 'waiting_parent', 'waiting_tutor', 'teaching'])[:5]:
             slot = (parse_schedule_text(class_obj.schedule_detail) or [{}])[0]
+            enrollment = class_obj.enrollments.select_related('student_id').first()
             upcoming.append({
                 'classId': class_obj.id,
                 'subject': class_obj.subject_name,
                 'date': None,
+                'studentName': enrollment.student_id.full_name if enrollment and enrollment.student_id else '',
+                'location': class_obj.address_teaching or '',
+                'address': class_obj.address_teaching or '',
                 'dayOfWeek': slot.get('dayOfWeek'),
                 'dayLabel': slot.get('dayLabel'),
                 'startTime': slot.get('startTime', '18:00'),
