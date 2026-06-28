@@ -14,14 +14,24 @@ function homeRouteForRole(role) {
   return '/dashboard';
 }
 
+function getLoginErrorInfo(error) {
+  const data = error.response?.data || {};
+  const detail = typeof data.detail === 'string' ? data.detail : data.detail?.toString?.() || '';
+  const code = data.code || data.detail?.code || '';
+  const pendingApproval = code === 'account_pending_approval' || detail.includes('chờ admin') || detail.includes('chờ duyệt');
+  return { detail, code, pendingApproval };
+}
+
 function Login({ onLoginSuccess }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [approvalModal, setApprovalModal] = useState(null);
   const router = useRouter();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setApprovalModal(null);
     
     if (!username || !password) {
       toast.error('Vui lòng nhập tên đăng nhập và mật khẩu');
@@ -61,9 +71,12 @@ function Login({ onLoginSuccess }) {
       }
     } catch (error) {
       console.error('Login failed:', error);
-      const message = error.response?.data?.detail;
-      if (message?.includes('chờ admin duyệt')) {
-        toast.error(message);
+      const { detail, pendingApproval } = getLoginErrorInfo(error);
+      if (pendingApproval) {
+        setApprovalModal({
+          title: 'Tài khoản đang chờ duyệt',
+          message: detail || 'Tài khoản của bạn đang chờ admin hoặc nhân viên duyệt trước khi có thể đăng nhập.',
+        });
       } else if (error.response?.status === 401) {
         toast.error('Sai tên đăng nhập hoặc mật khẩu');
       } else {
@@ -121,6 +134,21 @@ function Login({ onLoginSuccess }) {
           <Link href="/register/staff">Đăng ký nhân viên</Link>
         </div>
       </div>
+
+      {approvalModal ? (
+        <div className="approval-modal-backdrop" role="presentation">
+          <section className="approval-modal" role="alertdialog" aria-modal="true" aria-labelledby="approval-modal-title">
+            <div className="approval-modal-icon">!</div>
+            <h2 id="approval-modal-title">{approvalModal.title}</h2>
+            <p>{approvalModal.message}</p>
+            <p className="approval-modal-muted">Vui lòng chờ quản trị viên hoặc nhân viên trung tâm duyệt hồ sơ. Sau khi được duyệt, bạn có thể đăng nhập bằng tài khoản này.</p>
+            <div className="approval-modal-actions">
+              <button type="button" className="button button-primary" onClick={() => setApprovalModal(null)}>Đã hiểu</button>
+              <Link href="/">Về trang chủ</Link>
+            </div>
+          </section>
+        </div>
+      ) : null}
     </div>
   );
 }

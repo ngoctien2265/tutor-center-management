@@ -81,9 +81,6 @@ class StaffRegisterSerializer(BaseRegisterSerializer):
 
 
 class StudentRegisterSerializer(BaseRegisterSerializer):
-    parentFullName = serializers.CharField(max_length=255, required=False, allow_blank=True)
-    parentPhone = serializers.CharField(max_length=20, required=False, allow_blank=True, allow_null=True)
-    parentEmail = serializers.EmailField(required=False, allow_blank=True, allow_null=True)
     address = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     fullName = serializers.CharField(max_length=255)
     gender = serializers.CharField(max_length=10, required=False, allow_blank=True, allow_null=True)
@@ -94,9 +91,6 @@ class StudentRegisterSerializer(BaseRegisterSerializer):
 
     @transaction.atomic
     def create(self, validated_data):
-        parent_full_name = validated_data.pop('parentFullName', '') or validated_data.get('fullName')
-        parent_phone = validated_data.pop('parentPhone', None) or validated_data.get('phone')
-        parent_email = validated_data.pop('parentEmail', None) or validated_data.get('email')
         address = validated_data.pop('address', None) or None
 
         student_data = {
@@ -106,9 +100,6 @@ class StudentRegisterSerializer(BaseRegisterSerializer):
             'grade_level': validated_data.pop('gradeLevel', None) or None,
             'school_name': validated_data.pop('schoolName', None) or None,
             'note': validated_data.pop('note', None) or None,
-            'parent_name': parent_full_name,
-            'parent_phone': parent_phone,
-            'parent_email': parent_email,
             'address': address,
         }
 

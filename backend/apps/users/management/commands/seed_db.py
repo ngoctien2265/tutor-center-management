@@ -106,7 +106,7 @@ class Command(BaseCommand):
         return tutor
 
     def create_student(self, username, email, password, phone, full_name, gender, birthday, grade,
-                       school, parent_name, address, note):
+                       school, _contact_name, address, note):
         user = self.user(username, email, password, 'student', phone, full_name, status='active')
         student = Student.objects.create(
             user=user,
@@ -115,9 +115,6 @@ class Command(BaseCommand):
             birthday=birthday,
             grade_level=grade,
             school_name=school,
-            parent_name=parent_name,
-            parent_phone=phone,
-            parent_email=email,
             address=address,
             note=note,
         )

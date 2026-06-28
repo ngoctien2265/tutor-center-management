@@ -19,10 +19,6 @@ class Student(models.Model):
     grade_level = models.CharField(max_length=10, choices=STUDENT_GRADE_CHOICES, blank=True, null=True)
     school_name = models.CharField(max_length=255, blank=True, null=True)
 
-    # Parent information (merged from Parent model)
-    parent_name = models.CharField(max_length=255, blank=True, null=True)
-    parent_phone = models.CharField(max_length=20, blank=True, null=True)
-    parent_email = models.EmailField(blank=True, null=True)
     address = models.TextField(blank=True, null=True)
 
     note = models.TextField(blank=True, null=True)
@@ -33,7 +29,6 @@ class Student(models.Model):
         ordering = ['-created_at']
         indexes = [
             models.Index(fields=['grade_level']),
-            models.Index(fields=['parent_phone']),
         ]
 
     def __str__(self):

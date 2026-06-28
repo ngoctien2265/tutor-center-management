@@ -10,6 +10,7 @@ class ClassSerializer(serializers.ModelSerializer):
     student = serializers.SerializerMethodField()
     parent = serializers.SerializerMethodField()
     enrollment_id = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()
     tutor_id = serializers.PrimaryKeyRelatedField(
         queryset=Tutor.objects.all(),
         source='tutor',
@@ -32,6 +33,11 @@ class ClassSerializer(serializers.ModelSerializer):
         enrollment = self._enrollment(obj)
         return enrollment.id if enrollment else None
 
+    def get_status(self, obj):
+        if obj.status == 'assigned' and not self._enrollment(obj):
+            return 'waiting_student'
+        return obj.status
+
     def get_student(self, obj):
         enrollment = self._enrollment(obj)
         if not enrollment or not enrollment.student_id:
@@ -45,12 +51,8 @@ class ClassSerializer(serializers.ModelSerializer):
             'gradeLevel': student.grade_level,
             'school_name': student.school_name,
             'schoolName': student.school_name,
-            'parent_name': student.parent_name or '',
-            'parentName': student.parent_name or '',
-            'parent_phone': student.parent_phone or '',
-            'parentPhone': student.parent_phone or '',
-            'parent_email': student.parent_email or '',
-            'parentEmail': student.parent_email or '',
+            'phone': student.user.phone if student.user else '',
+            'email': student.user.email if student.user else '',
         }
 
     def get_parent(self, obj):
@@ -60,10 +62,10 @@ class ClassSerializer(serializers.ModelSerializer):
             return None
         return {
             'id': student.id,
-            'full_name': student.parent_name or student.full_name,
-            'fullName': student.parent_name or student.full_name,
-            'phone': student.parent_phone or '',
-            'email': student.parent_email or '',
+            'full_name': student.full_name,
+            'fullName': student.full_name,
+            'phone': student.user.phone if student.user else '',
+            'email': student.user.email if student.user else '',
             'address': student.address or '',
         }
 

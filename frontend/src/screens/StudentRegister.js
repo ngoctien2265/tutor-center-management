@@ -13,8 +13,6 @@ const initialForm = {
   phone: '',
   password: '',
   password_confirm: '',
-  parentFullName: '',
-  parentPhone: '',
   address: '',
   fullName: '',
   gender: '',
@@ -83,7 +81,7 @@ export default function StudentRegister() {
           <div className="register-heading">
             <span>Đăng ký học viên</span>
             <h1>Đăng ký học viên</h1>
-            <p>Tạo tài khoản học viên và thông tin phụ huynh để trung tâm tiếp nhận tư vấn lớp phù hợp.</p>
+            <p>Tạo tài khoản học viên để trung tâm tiếp nhận tư vấn lớp phù hợp.</p>
           </div>
 
           <section className="register-section">
@@ -98,15 +96,6 @@ export default function StudentRegister() {
           </section>
 
           <section className="register-section">
-            <h2>Thông tin phụ huynh/liên hệ</h2>
-            <div className="register-grid">
-              <Field label="Họ tên phụ huynh" name="parentFullName" value={form.parentFullName} onChange={update} />
-              <Field label="SĐT phụ huynh" name="parentPhone" value={form.parentPhone} onChange={update} />
-              <Field label="Địa chỉ" name="address" value={form.address} onChange={update} textarea />
-            </div>
-          </section>
-
-          <section className="register-section">
             <h2>Thông tin học viên</h2>
             <div className="register-grid">
               <Field label="Họ tên học viên *" name="fullName" value={form.fullName} onChange={update} />
@@ -114,6 +103,7 @@ export default function StudentRegister() {
               <Field label="Ngày sinh" name="birthday" type="date" value={form.birthday} onChange={update} />
               <Field label="Khối lớp" name="gradeLevel" value={form.gradeLevel} onChange={update} />
               <Field label="Trường học" name="schoolName" value={form.schoolName} onChange={update} />
+              <Field label="Địa chỉ" name="address" value={form.address} onChange={update} textarea />
               <Field label="Ghi chú" name="note" value={form.note} onChange={update} textarea />
             </div>
           </section>

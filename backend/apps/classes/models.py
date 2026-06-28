@@ -9,6 +9,7 @@ class Class(models.Model):
         ('open', 'Công khai lớp'),
         ('waiting_parent', 'Chờ phụ huynh xác nhận'),
         ('waiting_tutor', 'Chờ gia sư xác nhận'),
+        ('waiting_student', 'Đang chờ học viên'),
         ('assigned', 'Đã phân công gia sư'),
         ('teaching', 'Đang học'),
         ('paused', 'Tạm dừng'),

@@ -445,15 +445,13 @@ def finance(request):
     payment_rows = []
     for enrollment in enrollments[:100]:
         tx = _ensure_enrollment_transaction(enrollment)
-        # After Parent removal: parent info is now on the student.
-        # Use the student's parent_name as the payer label, fallback to the student's full name.
         student = enrollment.student_id
-        parent_label = (student.parent_name if student else '') or (student.full_name if student else '') or 'Phụ huynh'
+        payer_label = (student.full_name if student else '') or 'Học viên'
         payment_rows.append({
             'id': tx.id if tx else enrollment.id,
             'transactionId': tx.id if tx else None,
             'enrollmentId': enrollment.id,
-            'parent': parent_label,
+            'parent': payer_label,
             'className': enrollment.class_id.subject_name,
             'amount': tx.amount if tx else _enrollment_amount(enrollment),
             'date': (tx.updated_at if tx else enrollment.updated_at).date().isoformat(),

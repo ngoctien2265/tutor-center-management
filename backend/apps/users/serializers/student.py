@@ -20,5 +20,5 @@ class StudentCreateUpdateSerializer(serializers.ModelSerializer):
         model = Student
         fields = [
             'user', 'full_name', 'gender', 'birthday', 'grade_level', 'school_name',
-            'parent_name', 'parent_phone', 'parent_email', 'address', 'note'
+            'address', 'note'
         ]

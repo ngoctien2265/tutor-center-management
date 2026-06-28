@@ -30,9 +30,9 @@ class TutorAdmin(admin.ModelAdmin):
 
 @admin.register(Student)
 class StudentAdmin(admin.ModelAdmin):
-    list_display = ('full_name', 'parent_name', 'grade_level', 'school_name', 'created_at')
+    list_display = ('full_name', 'grade_level', 'school_name', 'created_at')
     list_filter = ('grade_level', 'created_at')
-    search_fields = ('full_name', 'school_name', 'parent_name', 'parent_phone')
+    search_fields = ('full_name', 'school_name', 'user__email', 'user__phone')
 
 
 admin.site.register(TutorQualification)

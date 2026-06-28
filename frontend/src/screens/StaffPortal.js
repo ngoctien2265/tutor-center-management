@@ -32,7 +32,7 @@ const initialClassForm = {
 const statusVi = {
   PENDING: 'Chờ duyệt', PENDING_REVIEW: 'Chờ duyệt', APPROVED: 'Đã duyệt', REJECTED: 'Từ chối',
   staff_pending: 'Chờ nhân viên xử lý', pending_admin: 'Chờ admin duyệt', open: 'Đang tìm gia sư',
-  waiting_parent: 'Chờ phụ huynh xác nhận', waiting_tutor: 'Chờ gia sư xác nhận', assigned: 'Đang học', teaching: 'Đang học',
+  waiting_parent: 'Chờ phụ huynh xác nhận', waiting_tutor: 'Chờ gia sư xác nhận', waiting_student: 'Đang chờ học viên', assigned: 'Đang học', teaching: 'Đang học',
   paused: 'Tạm dừng', completed: 'Hoàn thành', cancelled: 'Đã hủy', unpaid: 'Chưa thanh toán', paid: 'Đã thanh toán',
   TAUGHT: 'Đã dạy', ABSENCE: 'Nghỉ', MAKEUP: 'Dạy bù', CONFIRMED: 'Đã duyệt',
   PRESENT: 'Đã dạy', ABSENT: 'Nghỉ', LATE: 'Đi trễ', ABSENCE_ONLY: 'Nghỉ', RESCHEDULE: 'Dạy bù', ABSENCE_WITH_MAKEUP: 'Dạy bù',
@@ -86,6 +86,7 @@ function StatusBadge({ status }) {
   let tone = 'yellow';
   if (['đã thanh toán', 'đã duyệt', 'đã dạy', 'đang học', 'hoàn thành'].some((x) => lower.includes(x))) tone = 'green';
   if (['dạy bù', 'chờ phụ huynh', 'đang tìm'].some((x) => lower.includes(x))) tone = 'blue';
+  if (['đang chờ học viên'].some((x) => lower.includes(x))) tone = 'yellow';
   if (['chưa thanh toán', 'nghỉ', 'từ chối', 'hủy'].some((x) => lower.includes(x))) tone = 'red';
   return <span className={`staff-badge ${tone}`}>{label}</span>;
 }
@@ -143,7 +144,7 @@ function StaffPortal() {
     .filter((cls) => cls.status === 'staff_pending')
     .map((cls) => ({
       id: cls.id,
-      parent: cls.student?.parentName || cls.student?.parent_name || cls.student?.fullName || cls.student?.full_name || 'Phụ huynh',
+      parent: cls.student?.fullName || cls.student?.full_name || 'Học viên',
       student: cls.student?.fullName || cls.student?.full_name || '-',
       subject: (cls.subject_name || 'Môn học').replace(/\s+lớp\s+\d+/i, ''),
       grade: cls.grade_level || 'Chưa rõ',
@@ -424,7 +425,7 @@ function StaffPortal() {
       <label>Yêu cầu thêm<textarea className="staff-textarea" placeholder="VD: cần gia sư nữ, có kinh nghiệm luyện thi..." value={classForm.requirements} onChange={(e) => setClassForm({ ...classForm, requirements: e.target.value })} /></label>
       <button className="staff-submit-btn">Công khai lớp cho gia sư</button></form>}
 
-    {tab === 'classes' && !selectedClass && <section className="staff-card wide"><h2>Quản lý lớp học</h2><div className="class-management-grid">{classes.length ? classes.map((cls) => <article className="staff-class-card" key={cls.id}><div className="class-top-line"><h3>{cls.subject_name} - {cls.grade_level}</h3><StatusBadge status={cls.status} /></div><p><strong>Học viên:</strong> {cls.student?.fullName || cls.student?.full_name || '-'}</p><p><strong>Phụ huynh:</strong> {cls.student?.parentName || cls.student?.parent_name || '-'}</p><p><strong>Gia sư:</strong> {cls.tutor?.full_name || cls.tutor?.fullName || 'Chưa có'}</p><p><strong>Lịch học:</strong> {mergeScheduleDetail(cls.schedule_detail)}</p><p><strong>Địa điểm:</strong> {cls.address_teaching || '-'}</p><p className="green-text"><strong>Lương gia sư:</strong> {money(cls.salary_per_month)}/tháng</p><div className="staff-inline-actions wrap"><button className="staff-light-btn" onClick={() => setSelectedClass(cls)}>Xem chi tiết</button>{cls.status === 'open' && <button className="staff-light-btn" onClick={() => changeClassStatus(cls.id, 'cancelled')}>Hủy lớp</button>}{['teaching', 'assigned', 'waiting_parent'].includes(cls.status) && <button className="staff-light-btn" onClick={() => changeClassStatus(cls.id, 'completed')}>Hoàn thành</button>}{cls.status === 'cancelled' && <button className="staff-light-btn" onClick={() => changeClassStatus(cls.id, 'open')}>Mở lại</button>}</div></article>) : <p className="muted">Chưa có lớp học.</p>}</div></section>}
+    {tab === 'classes' && !selectedClass && <section className="staff-card wide"><h2>Quản lý lớp học</h2><div className="class-management-grid">{classes.length ? classes.map((cls) => <article className="staff-class-card" key={cls.id}><div className="class-top-line"><h3>{cls.subject_name} - {cls.grade_level}</h3><StatusBadge status={cls.status} /></div><p><strong>Học viên:</strong> {cls.student?.fullName || cls.student?.full_name || '-'}</p><p><strong>Gia sư:</strong> {cls.tutor?.full_name || cls.tutor?.fullName || 'Chưa có'}</p><p><strong>Lịch học:</strong> {mergeScheduleDetail(cls.schedule_detail)}</p><p><strong>Địa điểm:</strong> {cls.address_teaching || '-'}</p><p className="green-text"><strong>Lương gia sư:</strong> {money(cls.salary_per_month)}/tháng</p><div className="staff-inline-actions wrap"><button className="staff-light-btn" onClick={() => setSelectedClass(cls)}>Xem chi tiết</button>{cls.status === 'open' && <button className="staff-light-btn" onClick={() => changeClassStatus(cls.id, 'cancelled')}>Hủy lớp</button>}{['teaching', 'assigned', 'waiting_parent'].includes(cls.status) && <button className="staff-light-btn" onClick={() => changeClassStatus(cls.id, 'completed')}>Hoàn thành</button>}{cls.status === 'cancelled' && <button className="staff-light-btn" onClick={() => changeClassStatus(cls.id, 'open')}>Mở lại</button>}</div></article>) : <p className="muted">Chưa có lớp học.</p>}</div></section>}
 
     {tab === 'classes' && selectedClass && <>
       <div className="staff-inline-actions" style={{ marginBottom: '16px' }}>
@@ -439,7 +440,6 @@ function StaffPortal() {
           <p><strong>Môn học:</strong> {selectedClass.subject_name}</p>
           <p><strong>Lớp:</strong> {selectedClass.grade_level}</p>
           <p><strong>Học viên:</strong> {selectedClass.student?.fullName || selectedClass.student?.full_name || '-'}</p>
-          <p><strong>Phụ huynh:</strong> {selectedClass.student?.parentName || selectedClass.student?.parent_name || '-'}</p>
           <p><strong>Gia sư:</strong> {selectedClass.tutor?.full_name || selectedClass.tutor?.fullName || 'Chưa có'}</p>
           <p><strong>Trạng thái:</strong> <StatusBadge status={selectedClass.status} /></p>
           <p><strong>Hình thức:</strong> {selectedClass.teaching_mode === 'online' ? 'Online' : 'Offline'}</p>

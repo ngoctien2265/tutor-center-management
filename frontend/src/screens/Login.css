@@ -182,3 +182,81 @@
   border-color: #bfdbfe !important;
   border-radius: 16px !important;
 }
+
+.approval-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.46);
+}
+
+.approval-modal {
+  width: min(440px, 100%);
+  padding: 28px;
+  border: 1px solid #bfdbfe;
+  border-radius: 22px;
+  background: #ffffff;
+  box-shadow: 0 28px 80px rgba(15, 23, 42, 0.24);
+  color: #0f172a;
+  text-align: center;
+}
+
+.approval-modal-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 14px;
+  border-radius: 50%;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-weight: 900;
+  font-size: 24px;
+}
+
+.approval-modal h2 {
+  margin: 0 0 10px;
+  font-size: 24px;
+  line-height: 1.2;
+}
+
+.approval-modal p {
+  margin: 0;
+  color: #334155;
+  line-height: 1.6;
+}
+
+.approval-modal .approval-modal-muted {
+  margin-top: 10px;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.approval-modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 22px;
+}
+
+.approval-modal-actions .button {
+  min-width: 132px;
+}
+
+.approval-modal-actions a {
+  color: #1d4ed8;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.approval-modal-actions a:hover {
+  color: #2563eb;
+}

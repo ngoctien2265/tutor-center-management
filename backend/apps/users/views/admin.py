@@ -172,11 +172,10 @@ def student_sections(student):
             ],
         },
         {
-            'title': 'Phụ huynh / liên hệ',
+            'title': 'Liên hệ',
             'items': [
-                profile_item('Họ tên phụ huynh', student.parent_name),
-                profile_item('Email phụ huynh', student.parent_email),
-                profile_item('SĐT phụ huynh', student.parent_phone),
+                profile_item('Email', student.user.email if student.user else ''),
+                profile_item('SĐT', student.user.phone if student.user else ''),
                 profile_item('Địa chỉ', student.address),
             ],
         },
@@ -312,6 +311,8 @@ def class_display_status(cls):
         return 'pending_admin'
     if cls.status == 'waiting_parent':
         return 'waiting_parent'
+    if cls.status == 'waiting_student' or (cls.status == 'assigned' and not cls.enrollments.exists()):
+        return 'waiting_student'
     if cls.status == 'cancelled':
         return 'cancelled'
     if cls.status == 'completed':
@@ -936,9 +937,6 @@ def create_user(request):
     elif role == 'student':
         student_data = {
             'full_name': data['full_name'],
-            'parent_name': request.data.get('parentName', data['full_name']),
-            'parent_phone': data.get('phone'),
-            'parent_email': data.get('email'),
             'address': address,
             'grade_level': request.data.get('gradeLevel') or 'G10',
         }
@@ -994,18 +992,10 @@ def update_user(request, user_id):
     elif user.role == 'student':
         student, _ = Student.objects.get_or_create(user=user, defaults={
             'full_name': full_name,
-            'parent_phone': user.phone,
-            'parent_email': user.email
         })
         student.full_name = full_name
         if address is not None:
             student.address = address
-        if 'parentName' in request.data:
-            student.parent_name = request.data['parentName']
-        if 'parentPhone' in request.data:
-            student.parent_phone = request.data['parentPhone']
-        if 'parentEmail' in request.data:
-            student.parent_email = request.data['parentEmail']
         student.save()
 
     return ok(UserSerializer(user, context={'request': request}).data, 'Đã cập nhật tài khoản.')

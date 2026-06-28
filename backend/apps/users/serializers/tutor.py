@@ -258,13 +258,15 @@ class ApplicationSerializer(serializers.ModelSerializer):
 class ActiveClassSerializer(OpenClassSerializer):
     studentName = serializers.SerializerMethodField()
     studentPhone = serializers.SerializerMethodField()
-    parentName = serializers.SerializerMethodField()
-    parentPhone = serializers.SerializerMethodField()
     nextSession = serializers.SerializerMethodField()
     class Meta(OpenClassSerializer.Meta):
-        fields = ['classId','subject','level','studentName','studentPhone','parentName','parentPhone','location','teachingMode','salaryPerSession','schedule','requirements','status','nextSession','sessionsPerWeek','totalSessions','startDate','durationLabel']
+        fields = ['classId','subject','level','studentName','studentPhone','location','teachingMode','salaryPerSession','schedule','requirements','status','nextSession','sessionsPerWeek','totalSessions','startDate','durationLabel']
     def _enrollment(self, obj):
         return obj.enrollments.filter(status='active').first() or obj.enrollments.first()
+    def get_status(self, obj):
+        if obj.status == 'assigned' and not self._enrollment(obj):
+            return 'WAITING_STUDENT'
+        return obj.status.upper()
     def get_studentName(self, obj):
         e = self._enrollment(obj)
         return e.student_id.full_name if e else 'Chưa có học viên'
@@ -272,16 +274,6 @@ class ActiveClassSerializer(OpenClassSerializer):
         e = self._enrollment(obj)
         if e and e.student_id.user and e.student_id.user.phone:
             return e.student_id.user.phone
-        return ''
-    def get_parentName(self, obj):
-        e = self._enrollment(obj)
-        if e and e.student_id:
-            return e.student_id.parent_name or ''
-        return ''
-    def get_parentPhone(self, obj):
-        e = self._enrollment(obj)
-        if e and e.student_id:
-            return e.student_id.parent_phone or ''
         return ''
     def get_nextSession(self, obj):
         slot = self.get_schedule(obj)[0] if self.get_schedule(obj) else {}
