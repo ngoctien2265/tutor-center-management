@@ -1,6 +1,8 @@
+from datetime import date, timedelta
 from decimal import Decimal
 
 from django.db import IntegrityError
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -60,6 +62,76 @@ def default_monthly_fee(subject='', grade=''):
     if 'anh' in text:
         return Decimal('2200000')
     return Decimal('2000000')
+
+
+def _hhmm_to_minutes(value):
+    try:
+        hour, minute = str(value).split(':')[:2]
+        return int(hour) * 60 + int(minute)
+    except (TypeError, ValueError):
+        return None
+
+
+WEEKDAY_INDEX = {
+    'MONDAY': 0,
+    'TUESDAY': 1,
+    'WEDNESDAY': 2,
+    'THURSDAY': 3,
+    'FRIDAY': 4,
+    'SATURDAY': 5,
+    'SUNDAY': 6,
+}
+
+
+def _parse_date(value):
+    if isinstance(value, date):
+        return value
+    try:
+        return date.fromisoformat(str(value))
+    except (TypeError, ValueError):
+        return timezone.localdate()
+
+
+def estimate_monthly_hours(schedule_text, total_sessions=None, start_date=None):
+    slots = parse_schedule_text(schedule_text)
+    fallback_sessions = len([item for item in (schedule_text or '').split(',') if item.strip()])
+    sessions_per_week = max(len(slots) or fallback_sessions, 1)
+    start_day = _parse_date(start_date)
+    if not slots:
+        return Decimal(sessions_per_week), sessions_per_week
+
+    def month_end(day):
+        return date(day.year + (1 if day.month == 12 else 0), 1 if day.month == 12 else day.month + 1, 1)
+
+    def collect_occurrences(from_day):
+        until_day = month_end(from_day)
+        values = []
+        for slot in slots:
+            start_minutes = _hhmm_to_minutes(slot.get('startTime'))
+            end_minutes = _hhmm_to_minutes(slot.get('endTime'))
+            weekday = WEEKDAY_INDEX.get(slot.get('dayOfWeek'))
+            if start_minutes is None or end_minutes is None or end_minutes <= start_minutes or weekday is None:
+                continue
+            current = from_day
+            while current < until_day:
+                if current.weekday() == weekday:
+                    values.append((current, start_minutes, end_minutes - start_minutes))
+                current += timedelta(days=1)
+        return values
+
+    occurrences = collect_occurrences(start_day)
+    if not occurrences:
+        next_month_start = month_end(start_day)
+        occurrences = collect_occurrences(next_month_start)
+
+    if not occurrences:
+        return Decimal('0'), sessions_per_week
+
+    occurrences.sort(key=lambda item: (item[0], item[1]))
+    if total_sessions and total_sessions > 0:
+        occurrences = occurrences[:total_sessions]
+    monthly_minutes = sum(item[2] for item in occurrences)
+    return Decimal(monthly_minutes) / Decimal('60'), sessions_per_week
 
 
 def schedules_overlap(first, second):
@@ -260,23 +332,20 @@ def class_requests(request):
         return fail('Vui lòng nhập môn học cần tìm gia sư.')
     raw_hourly = request.data.get('expectedFee') or request.data.get('expectedHourlyRate') or '0'
     hourly_rate = Decimal(str(raw_hourly)) if str(raw_hourly).replace('.','').isdigit() and Decimal(str(raw_hourly)) > 0 else Decimal('0')
-    # Sessions per week estimate from desired schedule
     schedule_text = request.data.get('scheduleDetail') or request.data.get('desiredSchedule') or ''
-    slots = schedule_text.split(',') if schedule_text else []
-    est_sessions = max(len(slots), 1)
-    weekly_hours = est_sessions  # each slot = 1 hour
-    monthly_salary = hourly_rate * Decimal(str(weekly_hours)) * Decimal('4.33') if hourly_rate > 0 else default_monthly_fee(subject, request.data.get('gradeLevel') or target_student.grade_level)
-    
     total_sessions = request.data.get('totalSessions')
     if total_sessions is not None:
         try:
             total_sessions = int(total_sessions)
         except ValueError:
             total_sessions = None
+    start_date = request.data.get('startDate') or None
+    monthly_hours, est_sessions = estimate_monthly_hours(schedule_text, total_sessions, start_date)
+    monthly_salary = hourly_rate * monthly_hours if hourly_rate > 0 else default_monthly_fee(subject, request.data.get('gradeLevel') or target_student.grade_level)
             
     cls = Class.objects.create(
         created_by=request.user,
-        start_date=request.data.get('startDate') or None,
+        start_date=start_date,
         subject_name=subject,
         grade_level=request.data.get('gradeLevel') or request.data.get('grade_level') or target_student.grade_level or '',
         schedule_detail=schedule_text,

@@ -47,6 +47,45 @@ const itemsOf = (response) => response?.data?.data?.items || [];
 const dataOf = (response) => response?.data?.data || {};
 const lowerText = (v) => String(v || '').toLowerCase();
 const scheduleToText = (items = []) => items.map((x) => `${x.dayLabel || x.dayOfWeek || ''} ${x.startTime || ''}-${x.endTime || ''}`.trim()).filter(Boolean).join(', ');
+const staffDayIndexes = { 'Thứ 2': 1, 'Thứ 3': 2, 'Thứ 4': 3, 'Thứ 5': 4, 'Thứ 6': 5, 'Thứ 7': 6, 'Chủ nhật': 0 };
+
+function minutesFromHHMM(value) {
+  const [hour = '0', minute = '0'] = String(value || '').split(':');
+  const h = Number(hour);
+  const m = Number(minute);
+  return Number.isFinite(h) && Number.isFinite(m) ? h * 60 + m : null;
+}
+
+function estimateActualMonthHours(slots, totalSessions, startDate) {
+  const start = startDate ? new Date(startDate) : new Date();
+  if (Number.isNaN(start.getTime())) return 0;
+  const monthEnd = (date) => new Date(date.getFullYear(), date.getMonth() + 1, 1);
+  const collectOccurrences = (fromDate) => {
+    const nextMonth = monthEnd(fromDate);
+    const values = [];
+    slots.forEach((slot) => {
+      const match = String(slot).match(/(.+)\s+(\d{1,2}:\d{2})-(\d{1,2}:\d{2})/);
+      if (!match) return;
+      const [, dayLabel, startText, endText] = match;
+      const weekday = staffDayIndexes[dayLabel.trim()];
+      const startMinutes = minutesFromHHMM(startText);
+      const endMinutes = minutesFromHHMM(endText);
+      if (weekday === undefined || startMinutes === null || endMinutes === null || endMinutes <= startMinutes) return;
+      const current = new Date(fromDate);
+      while (current < nextMonth) {
+        if (current.getDay() === weekday) values.push({ date: new Date(current), startMinutes, minutes: endMinutes - startMinutes });
+        current.setDate(current.getDate() + 1);
+      }
+    });
+    return values;
+  };
+  let occurrences = collectOccurrences(start);
+  if (!occurrences.length) occurrences = collectOccurrences(monthEnd(start));
+  occurrences.sort((a, b) => a.date - b.date || a.startMinutes - b.startMinutes);
+  const limit = Number(totalSessions || 0);
+  const counted = limit > 0 ? occurrences.slice(0, limit) : occurrences;
+  return counted.reduce((sum, item) => sum + item.minutes / 60, 0);
+}
 
 function mergeScheduleDetail(detailStr) {
   if (!detailStr) return '-';
@@ -306,15 +345,10 @@ function StaffPortal() {
 
   const calculateClassFees = () => {
     const slots = buildClassScheduleDetail();
-    const weeklySelectedHours = Object.values(classForm.scheduleCells || {}).filter(Boolean).length;
     const sessionsPerWeek = slots.length;
     const totalSessions = Number(classForm.total_sessions || 0);
     const hourlyRate = Number(classForm.expected_hourly_rate || 0);
-    const averageHoursPerSession = sessionsPerWeek ? weeklySelectedHours / sessionsPerWeek : 1;
-    const monthlySessions = totalSessions > 0
-      ? Math.min(totalSessions, sessionsPerWeek * 4.33)
-      : sessionsPerWeek * 4.33;
-    const monthlyHours = monthlySessions * averageHoursPerSession;
+    const monthlyHours = estimateActualMonthHours(slots, totalSessions, classForm.start_date);
     const salaryPerMonth = hourlyRate > 0 && sessionsPerWeek > 0 ? Math.round(hourlyRate * monthlyHours) : 0;
     return {
       slots,
