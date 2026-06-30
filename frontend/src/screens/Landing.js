@@ -7,7 +7,7 @@ function Landing() {
   return (
     <main className="landing-page">
       <nav className="landing-nav">
-        <div className="landing-brand">Trung tâm gia sư</div>
+        <div className="landing-brand">Phần mềm quản lý cho trung tâm gia sư</div>
         <div className="landing-links">
           <Link href="/login">Đăng nhập</Link>
           <Link href="/register/student" className="landing-nav-cta">Đăng ký học</Link>
@@ -16,8 +16,8 @@ function Landing() {
 
       <section className="landing-hero">
         <div className="landing-hero-content">
-          <span className="eyebrow">Quản lý gia sư hiện đại</span>
-          <h1>Kết nối học viên và gia sư trong một hệ thống quản lý rõ ràng.</h1>
+          <span className="eyebrow">Phần mềm quản lý cho trung tâm gia sư</span>
+          <h1>Quản lý lớp học, gia sư và học viên trong một hệ thống rõ ràng.</h1>
           <p>
             Nền tảng hỗ trợ trung tâm quản lý lớp học, gia sư, học viên, lịch dạy,
             hồ sơ năng lực và các yêu cầu vận hành hằng ngày.

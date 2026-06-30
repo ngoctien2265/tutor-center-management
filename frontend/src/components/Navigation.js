@@ -147,7 +147,7 @@ function Navigation({ onLogout }) {
         <div className="brand-logo-row">
           <div className="brand-logo-mark"><img src="/tutor-logo.svg" alt="Logo gia sư" /></div>
           <div>
-            <span>Gia Sư Center</span>
+            <span>Phần mềm quản lý cho trung tâm gia sư</span>
             <h1>{panelTitle}</h1>
           </div>
         </div>

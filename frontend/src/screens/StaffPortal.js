@@ -39,6 +39,11 @@ const statusVi = {
   'Đã dạy': 'Đã dạy', 'Nghỉ': 'Nghỉ', 'Dạy bù': 'Dạy bù', 'Đã duyệt': 'Đã duyệt',
 };
 
+const classStatusFilterOptions = [
+  'staff_pending', 'pending_admin', 'open', 'waiting_parent', 'waiting_tutor',
+  'waiting_student', 'assigned', 'teaching', 'paused', 'completed', 'cancelled',
+];
+
 const money = (value) => Number(value || 0).toLocaleString('vi-VN') + 'đ';
 const itemsOf = (response) => response?.data?.data?.items || [];
 const dataOf = (response) => response?.data?.data || {};
@@ -114,6 +119,7 @@ function StaffPortal() {
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [selectedRequestDetail, setSelectedRequestDetail] = useState(null);
   const [selectedClass, setSelectedClass] = useState(null);
+  const [classStatusFilter, setClassStatusFilter] = useState('all');
   const [paymentTab, setPaymentTab] = useState('studentPayments');
 
   const setTab = (nextTab) => router.push(nextTab === 'dashboard' ? '/staff' : `/staff?tab=${nextTab}`);
@@ -249,6 +255,10 @@ function StaffPortal() {
     salary: row.totalSalary || row.salary || 0,
     status: row.status || 'Đã tính',
   })), [finance]);
+  const filteredClasses = useMemo(() => {
+    if (classStatusFilter === 'all') return classes;
+    return classes.filter((cls) => cls.status === classStatusFilter);
+  }, [classes, classStatusFilter]);
 
   const buildClassScheduleDetail = () => {
     const selectedSlotsMap = {};
@@ -425,7 +435,37 @@ function StaffPortal() {
       <label>Yêu cầu thêm<textarea className="staff-textarea" placeholder="VD: cần gia sư nữ, có kinh nghiệm luyện thi..." value={classForm.requirements} onChange={(e) => setClassForm({ ...classForm, requirements: e.target.value })} /></label>
       <button className="staff-submit-btn">Công khai lớp cho gia sư</button></form>}
 
-    {tab === 'classes' && !selectedClass && <section className="staff-card wide"><h2>Quản lý lớp học</h2><div className="class-management-grid">{classes.length ? classes.map((cls) => <article className="staff-class-card" key={cls.id}><div className="class-top-line"><h3>{cls.subject_name} - {cls.grade_level}</h3><StatusBadge status={cls.status} /></div><p><strong>Học viên:</strong> {cls.student?.fullName || cls.student?.full_name || '-'}</p><p><strong>Gia sư:</strong> {cls.tutor?.full_name || cls.tutor?.fullName || 'Chưa có'}</p><p><strong>Lịch học:</strong> {mergeScheduleDetail(cls.schedule_detail)}</p><p><strong>Địa điểm:</strong> {cls.address_teaching || '-'}</p><p className="green-text"><strong>Lương gia sư:</strong> {money(cls.salary_per_month)}/tháng</p><div className="staff-inline-actions wrap"><button className="staff-light-btn" onClick={() => setSelectedClass(cls)}>Xem chi tiết</button>{cls.status === 'open' && <button className="staff-light-btn" onClick={() => changeClassStatus(cls.id, 'cancelled')}>Hủy lớp</button>}{['teaching', 'assigned', 'waiting_parent'].includes(cls.status) && <button className="staff-light-btn" onClick={() => changeClassStatus(cls.id, 'completed')}>Hoàn thành</button>}{cls.status === 'cancelled' && <button className="staff-light-btn" onClick={() => changeClassStatus(cls.id, 'open')}>Mở lại</button>}</div></article>) : <p className="muted">Chưa có lớp học.</p>}</div></section>}
+    {tab === 'classes' && !selectedClass && <section className="staff-card wide">
+      <div className="section-head">
+        <h2>Quản lý lớp học</h2>
+        <div className="staff-search-grid class-status-filter">
+          <label>Trạng thái lớp
+            <select value={classStatusFilter} onChange={(e) => setClassStatusFilter(e.target.value)}>
+              <option value="all">Tất cả trạng thái</option>
+              {classStatusFilterOptions.map((status) => (
+                <option key={status} value={status}>{statusVi[status] || status}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+      </div>
+      <div className="class-management-grid">
+        {filteredClasses.length ? filteredClasses.map((cls) => <article className="staff-class-card" key={cls.id}>
+          <div className="class-top-line"><h3>{cls.subject_name} - {cls.grade_level}</h3><StatusBadge status={cls.status} /></div>
+          <p><strong>Học viên:</strong> {cls.student?.fullName || cls.student?.full_name || '-'}</p>
+          <p><strong>Gia sư:</strong> {cls.tutor?.full_name || cls.tutor?.fullName || 'Chưa có'}</p>
+          <p><strong>Lịch học:</strong> {mergeScheduleDetail(cls.schedule_detail)}</p>
+          <p><strong>Địa điểm:</strong> {cls.address_teaching || '-'}</p>
+          <p className="green-text"><strong>Lương gia sư:</strong> {money(cls.salary_per_month)}/tháng</p>
+          <div className="staff-inline-actions wrap">
+            <button className="staff-light-btn" onClick={() => setSelectedClass(cls)}>Xem chi tiết</button>
+            {cls.status === 'open' && <button className="staff-light-btn" onClick={() => changeClassStatus(cls.id, 'cancelled')}>Hủy lớp</button>}
+            {['teaching', 'assigned', 'waiting_parent'].includes(cls.status) && <button className="staff-light-btn" onClick={() => changeClassStatus(cls.id, 'completed')}>Hoàn thành</button>}
+            {cls.status === 'cancelled' && <button className="staff-light-btn" onClick={() => changeClassStatus(cls.id, 'open')}>Mở lại</button>}
+          </div>
+        </article>) : <p className="muted">{classes.length ? 'Không có lớp học ở trạng thái này.' : 'Chưa có lớp học.'}</p>}
+      </div>
+    </section>}
 
     {tab === 'classes' && selectedClass && <>
       <div className="staff-inline-actions" style={{ marginBottom: '16px' }}>

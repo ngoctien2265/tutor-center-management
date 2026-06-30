@@ -230,28 +230,55 @@ function ReviewTab({ review, reviewState, setReviewState, sendReview }) {
 }
 
 function QrPaymentModal({ qrModal, onClose, onConfirm }) {
+  const paymentCode = `HP-${String(qrModal.id || qrModal.qrSeed).toUpperCase()}-${String(qrModal.month || '').replace(/\s+/g, '')}`;
+
   return <div className="modal-backdrop" onClick={onClose}>
     <section className="modal-card qr-payment-modal" onClick={(e) => e.stopPropagation()}>
       <button className="modal-close" onClick={onClose}>×</button>
-      <h2>Thanh toán học phí</h2>
+      <div className="qr-payment-head">
+        <span>Hóa đơn học phí</span>
+        <h2>Thanh toán học phí</h2>
+        <p>Quét mã QR bằng ứng dụng ngân hàng, sau đó xác nhận để trung tâm ghi nhận thanh toán.</p>
+      </div>
       <div className="qr-payment-content">
-        <div className="qr-info-row"><span>Lớp học:</span><strong>{qrModal.className}</strong></div>
-        <div className="qr-info-row"><span>Tháng:</span><strong>{qrModal.month}</strong></div>
-        <div className="qr-info-row"><span>Số tiền:</span><strong className="green-text">{money(qrModal.amount)}</strong></div>
-        <div className="qr-code-box">
-          <svg viewBox="0 0 200 200" width="200" height="200">
-            {Array.from({ length: 400 }, (_, index) => {
-              const x = index % 20;
-              const y = Math.floor(index / 20);
-              const seed = qrModal.qrSeed;
-              const hash = ((x * 31 + y * 17 + seed.charCodeAt((x + y) % seed.length)) * 7) % 100;
-              return ((x < 3 && y < 3) || (x > 16 && y < 3) || (x < 3 && y > 16) || hash < 40) ? <rect key={`${x}-${y}`} x={x * 10} y={y * 10} width="10" height="10" fill="#0f172a" /> : null;
-            })}
-          </svg>
-          <p className="muted">Quét mã QR để thanh toán</p>
+        <div className="qr-code-panel">
+          <div className="qr-code-box" aria-label="Mã QR thanh toán học phí">
+            <span className="qr-scan-corner top-left" />
+            <span className="qr-scan-corner top-right" />
+            <span className="qr-scan-corner bottom-left" />
+            <span className="qr-scan-corner bottom-right" />
+            <svg className="qr-code-svg" viewBox="0 0 200 200" width="200" height="200">
+              {Array.from({ length: 400 }, (_, index) => {
+                const x = index % 20;
+                const y = Math.floor(index / 20);
+                const seed = qrModal.qrSeed;
+                const hash = ((x * 31 + y * 17 + seed.charCodeAt((x + y) % seed.length)) * 7) % 100;
+                return ((x < 3 && y < 3) || (x > 16 && y < 3) || (x < 3 && y > 16) || hash < 40) ? <rect key={`${x}-${y}`} x={x * 10} y={y * 10} width="10" height="10" rx="1.5" fill="#0f172a" /> : null;
+              })}
+            </svg>
+          </div>
+          <p className="qr-code-caption">Mã QR thanh toán</p>
+          <strong>{paymentCode}</strong>
         </div>
-        <button className="tutor-submit full-width" onClick={onConfirm}>Xác nhận đã thanh toán</button>
-        <button className="outline-btn full-width" style={{ marginTop: '10px' }} onClick={onClose}>Đóng</button>
+        <div className="qr-payment-summary">
+          <div className="qr-amount-card">
+            <span>Số tiền cần thanh toán</span>
+            <strong>{money(qrModal.amount)}</strong>
+          </div>
+          <div className="qr-info-list">
+            <div className="qr-info-row"><span>Lớp học</span><strong>{qrModal.className}</strong></div>
+            <div className="qr-info-row"><span>Tháng</span><strong>{qrModal.month}</strong></div>
+            <div className="qr-info-row"><span>Nội dung chuyển khoản</span><strong>{paymentCode}</strong></div>
+          </div>
+          <div className="qr-payment-note">
+            <strong>Lưu ý</strong>
+            <span>Vui lòng giữ nguyên nội dung chuyển khoản để hệ thống đối soát nhanh hơn.</span>
+          </div>
+          <div className="qr-payment-actions">
+            <button className="tutor-submit full-width" onClick={onConfirm}>Xác nhận đã thanh toán</button>
+            <button className="outline-btn full-width" onClick={onClose}>Đóng</button>
+          </div>
+        </div>
       </div>
     </section>
   </div>;

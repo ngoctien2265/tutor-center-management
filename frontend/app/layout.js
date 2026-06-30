@@ -1,8 +1,8 @@
 import '../src/App.css';
 
 export const metadata = {
-  title: 'Quản lý trung tâm gia sư',
-  description: 'Bảng điều khiển quản lý trung tâm gia sư',
+  title: 'Phần mềm quản lý cho trung tâm gia sư',
+  description: 'Phần mềm quản lý lớp học, gia sư, học viên và vận hành cho trung tâm gia sư',
 };
 
 export default function RootLayout({ children }) {

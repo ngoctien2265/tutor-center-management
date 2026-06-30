@@ -90,7 +90,7 @@ function Login({ onLoginSuccess }) {
   return (
     <div className="login-container">
       <div className="login-card">
-        <h1 className="login-title"><span>Hệ thống quản lý</span><span>Gia sư</span></h1>
+        <h1 className="login-title"><span>Phần mềm quản lý</span><span>Trung tâm gia sư</span></h1>
         <p className="login-subtitle">Đăng nhập tài khoản</p>
 
         <form onSubmit={handleSubmit} className="login-form">

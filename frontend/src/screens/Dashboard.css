@@ -643,6 +643,11 @@ td .button:hover,
   grid-template-columns: repeat(4, minmax(200px, 1fr));
 }
 
+.class-status-filter {
+  max-width: 320px;
+  margin-left: auto;
+}
+
 .staff-day-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

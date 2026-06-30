@@ -118,7 +118,7 @@
   }
 }
 
-/* Cố định tiêu đề login thành 2 dòng: "Hệ thống quản lý" / "Gia sư" */
+/* Cố định tiêu đề login thành 2 dòng. */
 .login-title span {
   display: block;
   white-space: nowrap;
