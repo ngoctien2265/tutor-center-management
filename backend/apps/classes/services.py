@@ -13,7 +13,7 @@ class ClassService:
         """Assign a tutor to a class"""
         tutor = Tutor.objects.get(id=tutor_id)
         cls.tutor = tutor
-        cls.status = 'waiting_tutor'
+        cls.status = 'teaching' if cls.enrollments.exists() else 'waiting_student'
         cls.save()
         return cls
 

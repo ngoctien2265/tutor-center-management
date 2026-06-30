@@ -61,10 +61,10 @@ def dashboard(request):
         'students': Student.objects.count(),
         'tutors': Tutor.objects.count(),
         'classes': Class.objects.count(),
-        'pendingStaffRequests': Class.objects.filter(status='staff_pending').count(),
+        'pendingStaffRequests': Class.objects.filter(status='open', tutor__isnull=True).count(),
         'pendingAdminClasses': 0,
         'openClasses': Class.objects.filter(status='open').count(),
-        'activeClasses': Class.objects.filter(status__in=['assigned', 'waiting_tutor', 'teaching']).count(),
+        'activeClasses': Class.objects.filter(status__in=['teaching', 'waiting_student']).count(),
         'pendingApplications': ClassApplication.objects.filter(status='PENDING').count(),
         'pendingAbsenceRequests': AbsenceRequest.objects.filter(status='PENDING').count(),
         'pendingQualifications': TutorQualification.objects.filter(status='PENDING_REVIEW').count(),
@@ -177,7 +177,7 @@ def review_application(request, application_id):
     if decision == 'APPROVED':
         cls = application.class_obj
         cls.tutor = application.tutor
-        cls.status = 'waiting_parent'
+        cls.status = 'teaching' if cls.enrollments.exists() else 'waiting_student'
         cls.save(update_fields=['tutor', 'status', 'updated_at'])
     return ok(ApplicationSerializer(application, context={'request': request}).data, 'Đã xử lý đơn nhận lớp.')
 
@@ -460,7 +460,7 @@ def finance(request):
     salary_rows = []
     salary_qs = (
         Class.objects
-        .filter(tutor__isnull=False, status__in=['assigned', 'waiting_tutor', 'teaching', 'paused', 'completed'])
+        .filter(tutor__isnull=False, status__in=['teaching', 'waiting_student', 'completed'])
         .values('tutor_id', 'tutor__full_name', 'tutor__user__username')
         .annotate(total_salary=Sum('salary_per_month'))
         .order_by('tutor__full_name')
@@ -521,7 +521,7 @@ def review_class_request(request, class_id):
     except Class.DoesNotExist:
         return fail('Không tìm thấy yêu cầu tìm gia sư.', status.HTTP_404_NOT_FOUND)
     decision = request.data.get('status') or request.data.get('decision')
-    if cls.status not in ['staff_pending', 'open']:
+    if cls.status != 'open':
         return fail('Yêu cầu này đã được xử lý, không thể công khai lại.')
     if decision in ['APPROVED', 'approved', 'PROCESSING', 'open', 'PUBLIC']:
         cls.status = 'open'
@@ -549,10 +549,10 @@ def invite_tutor(request, tutor_id):
     cls = Class.objects.filter(pk=class_id).first() if class_id else None
     if not cls:
         return fail('Vui lòng chọn yêu cầu/lớp cần gửi gia sư cho phụ huynh xác nhận.')
-    if cls.status not in ['staff_pending', 'open']:
+    if cls.status != 'open':
         return fail('Lớp này không còn ở trạng thái có thể gửi gia sư.')
     cls.tutor = tutor
-    cls.status = 'waiting_parent'
+    cls.status = 'teaching' if cls.enrollments.exists() else 'waiting_student'
     cls.save(update_fields=['tutor', 'status', 'updated_at'])
     app, _ = ClassApplication.objects.get_or_create(tutor=tutor, class_obj=cls, defaults={'cover_note': 'Nhân viên đề xuất gia sư cho phụ huynh xác nhận.', 'status': 'APPROVED'})
     if app.status != 'APPROVED':

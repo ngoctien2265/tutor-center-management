@@ -264,7 +264,7 @@ class ActiveClassSerializer(OpenClassSerializer):
     def _enrollment(self, obj):
         return obj.enrollments.filter(status='active').first() or obj.enrollments.first()
     def get_status(self, obj):
-        if obj.status == 'assigned' and not self._enrollment(obj):
+        if obj.status == 'teaching' and not self._enrollment(obj):
             return 'WAITING_STUDENT'
         return obj.status.upper()
     def get_studentName(self, obj):

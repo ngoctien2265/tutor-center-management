@@ -34,7 +34,7 @@ class ClassSerializer(serializers.ModelSerializer):
         return enrollment.id if enrollment else None
 
     def get_status(self, obj):
-        if obj.status == 'assigned' and not self._enrollment(obj):
+        if obj.status == 'teaching' and not self._enrollment(obj):
             return 'waiting_student'
         return obj.status
 

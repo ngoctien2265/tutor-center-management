@@ -4,17 +4,11 @@ from apps.users.models import Tutor, User
 
 class Class(models.Model):
     STATUS_CHOICES = (
-        ('staff_pending', 'Chờ nhân viên xử lý'),
-        ('pending_admin', 'Chờ admin duyệt'),
-        ('open', 'Công khai lớp'),
-        ('waiting_parent', 'Chờ phụ huynh xác nhận'),
-        ('waiting_tutor', 'Chờ gia sư xác nhận'),
-        ('waiting_student', 'Đang chờ học viên'),
-        ('assigned', 'Đã phân công gia sư'),
-        ('teaching', 'Đang học'),
-        ('paused', 'Tạm dừng'),
         ('completed', 'Hoàn thành'),
         ('cancelled', 'Đã hủy'),
+        ('teaching', 'Đang dạy'),
+        ('open', 'Đang tìm gia sư'),
+        ('waiting_student', 'Đang chờ học viên'),
     )
     
     tutor = models.ForeignKey(Tutor, on_delete=models.SET_NULL, null=True, blank=True, related_name='classes_teaching')

@@ -21,8 +21,8 @@ from apps.users.serializers import TutorSerializer, UserSerializer
 from apps.users.serializers.tutor import parse_schedule_text
 
 
-ACTIVE_CLASS_STATUSES = ['assigned', 'waiting_tutor', 'teaching', 'paused']
-REVIEWED_CLASS_STATUSES = ['open', 'waiting_parent', 'assigned', 'waiting_tutor', 'teaching', 'paused']
+ACTIVE_CLASS_STATUSES = ['teaching', 'waiting_student']
+REVIEWED_CLASS_STATUSES = ['open', 'teaching', 'waiting_student']
 PHONE_RE = re.compile(r'^(0|\+84)[0-9]{9,10}$')
 
 
@@ -305,19 +305,13 @@ def current_month_sum(qs, amount_field='amount', date_field='updated_at'):
 
 
 def class_display_status(cls):
-    if cls.status == 'staff_pending':
-        return 'staff_pending'
-    if cls.status == 'pending_admin':
-        return 'pending_admin'
-    if cls.status == 'waiting_parent':
-        return 'waiting_parent'
-    if cls.status == 'waiting_student' or (cls.status == 'assigned' and not cls.enrollments.exists()):
+    if cls.status == 'waiting_student' or (cls.status == 'teaching' and not cls.enrollments.exists()):
         return 'waiting_student'
     if cls.status == 'cancelled':
         return 'cancelled'
     if cls.status == 'completed':
         return 'completed'
-    if cls.tutor_id and cls.status in REVIEWED_CLASS_STATUSES + ['assigned', 'waiting_tutor', 'teaching', 'paused']:
+    if cls.tutor_id and cls.status in REVIEWED_CLASS_STATUSES:
         return 'teaching'
     if not cls.tutor_id:
         return 'open'
@@ -407,7 +401,7 @@ def dashboard(request):
         'pending': {
             'staff': User.objects.filter(role='staff', status='inactive').count(),
             'tutors': Tutor.objects.filter(is_verified=False).count(),
-            'classes': Class.objects.filter(status='pending_admin').count(),
+            'classes': Class.objects.filter(status='open', tutor__isnull=True).count(),
         },
         'activity': {
             'activeUsers': User.objects.filter(is_active=True).count(),
@@ -609,7 +603,7 @@ def class_requests(request):
     guard = require_admin(request)
     if guard:
         return guard
-    qs = Class.objects.filter(status='pending_admin')
+    qs = Class.objects.filter(status='open', tutor__isnull=True)
     return ok(paginate(request, qs, ClassSerializer))
 
 
@@ -623,8 +617,8 @@ def review_class(request, class_id):
         cls = Class.objects.get(pk=class_id)
     except Class.DoesNotExist:
         return fail('Không tìm thấy lớp.', status.HTTP_404_NOT_FOUND)
-    if cls.status != 'pending_admin':
-        return fail('Chỉ được duyệt hoặc từ chối các lớp đang ở trạng thái Chờ duyệt.')
+    if cls.status != 'open':
+        return fail('Chỉ được duyệt hoặc từ chối các lớp đang tìm gia sư.')
 
     decision = request.data.get('status') or request.data.get('decision')
     if decision in ['APPROVED', 'approved', 'approve', 'APPROVE', 'open']:

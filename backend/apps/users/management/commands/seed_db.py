@@ -307,11 +307,11 @@ class Command(BaseCommand):
 
         c_staff_pending = self.create_class(
             student_1.user, 'Toán lớp 10', 'G10', 'Thứ 3 18:00-19:30, Thứ 5 18:00-19:30', 2,
-            2800000, 3800000, 'Bình Thạnh, TP.HCM', 'Học sinh cần lấy lại căn bản đại số.', 'staff_pending', start_offset=5, hourly=220000
+            2800000, 3800000, 'Bình Thạnh, TP.HCM', 'Học sinh cần lấy lại căn bản đại số.', 'open', start_offset=5, hourly=220000
         )
         c_pending_admin = self.create_class(
             staff_1, 'Tiếng Anh lớp 8', 'G8', 'Thứ 2 19:00-20:30, Thứ 6 19:00-20:30', 2,
-            2400000, 3400000, 'Quận 3, TP.HCM', 'Ưu tiên gia sư nữ, phát âm tốt.', 'pending_admin', start_offset=3, hourly=200000,
+            2400000, 3400000, 'Quận 3, TP.HCM', 'Ưu tiên gia sư nữ, phát âm tốt.', 'open', start_offset=3, hourly=200000,
             admin_note='Nhân viên đã kiểm tra thông tin, chờ admin duyệt công khai.'
         )
         c_open_math = self.create_class(
@@ -328,15 +328,15 @@ class Command(BaseCommand):
         )
         c_waiting_parent = self.create_class(
             staff_1, 'Hóa học mất gốc', 'G11', 'Thứ 3 18:00-19:30, Thứ 5 18:00-19:30', 2,
-            3000000, 4200000, 'Quận 7, TP.HCM', 'Phụ huynh cần xác nhận gia sư được đề xuất.', 'waiting_parent', tutor=tutor_4, start_offset=2, hourly=240000
+            3000000, 4200000, 'Quận 7, TP.HCM', 'Phụ huynh cần xác nhận gia sư được đề xuất.', 'teaching', tutor=tutor_4, start_offset=2, hourly=240000
         )
         c_waiting_tutor = self.create_class(
             staff_2, 'Tin học Python cơ bản', 'G10', 'Thứ 3 19:30-21:00, Chủ nhật 09:00-10:30', 2,
-            3200000, 4500000, 'Online', 'Chờ gia sư xác nhận lịch dạy.', 'waiting_tutor', tutor=tutor_2, start_offset=1, mode='online', hourly=250000
+            3200000, 4500000, 'Online', 'Chờ gia sư xác nhận lịch dạy.', 'teaching', tutor=tutor_2, start_offset=1, mode='online', hourly=250000
         )
         c_assigned = self.create_class(
             staff_1, 'Vật lý lớp 10', 'G10', 'Thứ 7 08:00-09:30', 1,
-            2200000, 3100000, 'Bình Thạnh, TP.HCM', 'Đã phân công gia sư, chuẩn bị khai giảng.', 'assigned', tutor=tutor_1, start_offset=4, hourly=210000
+            2200000, 3100000, 'Bình Thạnh, TP.HCM', 'Đã phân công gia sư, chuẩn bị khai giảng.', 'teaching', tutor=tutor_1, start_offset=4, hourly=210000
         )
         c_teaching_math = self.create_class(
             staff_1, 'Toán lớp 11', 'G11', 'Thứ 2 18:00-19:30, Thứ 4 18:00-19:30', 2,
@@ -348,7 +348,7 @@ class Command(BaseCommand):
         )
         c_paused = self.create_class(
             staff_2, 'IELTS Foundation', 'G10', 'Thứ 6 18:30-20:00', 1,
-            2800000, 3900000, 'Thủ Đức, TP.HCM', 'Tạm dừng 1 tuần do học viên bận thi.', 'paused', tutor=tutor_3, start_offset=-25, hourly=230000
+            2800000, 3900000, 'Thủ Đức, TP.HCM', 'Tạm dừng 1 tuần do học viên bận thi.', 'teaching', tutor=tutor_3, start_offset=-25, hourly=230000
         )
         c_completed = self.create_class(
             staff_1, 'Toán lớp 9', 'G9', 'Thứ 7 09:30-11:00', 1,

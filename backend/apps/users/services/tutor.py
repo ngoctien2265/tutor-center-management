@@ -45,9 +45,9 @@ class TutorService:
 
     @staticmethod
     def get_dashboard(tutor):
-        active_qs = Class.objects.filter(tutor=tutor, status__in=['waiting_parent', 'waiting_tutor', 'assigned', 'teaching', 'paused', 'completed', 'cancelled'])
+        active_qs = Class.objects.filter(tutor=tutor, status__in=['teaching', 'waiting_student', 'completed', 'cancelled'])
         upcoming = []
-        for class_obj in active_qs.filter(status__in=['assigned', 'waiting_parent', 'waiting_tutor', 'teaching'])[:5]:
+        for class_obj in active_qs.filter(status__in=['teaching', 'waiting_student'])[:5]:
             slot = (parse_schedule_text(class_obj.schedule_detail) or [{}])[0]
             enrollment = class_obj.enrollments.select_related('student_id').first()
             upcoming.append({
@@ -63,7 +63,7 @@ class TutorService:
                 'endTime': slot.get('endTime', '19:30'),
             })
         return {
-            'activeClasses': active_qs.filter(status__in=['assigned', 'waiting_parent', 'waiting_tutor', 'teaching']).count(),
+            'activeClasses': active_qs.filter(status__in=['teaching', 'waiting_student']).count(),
             'pendingApplications': tutor.applications.filter(status='PENDING').count(),
             'approvedApplications': tutor.applications.filter(status='APPROVED').count(),
             'pendingAbsenceRequests': tutor.absence_requests.filter(status='PENDING', request_type='ABSENCE_ONLY').count(),
@@ -170,7 +170,7 @@ class TutorService:
     @staticmethod
     def check_schedule_conflicts(tutor, day, start, end):
         conflicts = []
-        for class_obj in Class.objects.filter(tutor=tutor, status__in=['assigned', 'waiting_tutor', 'teaching']):
+        for class_obj in Class.objects.filter(tutor=tutor, status__in=['teaching', 'waiting_student']):
             for slot in parse_schedule_text(class_obj.schedule_detail):
                 if slot.get('dayOfWeek') != day:
                     continue
@@ -222,7 +222,7 @@ class TutorService:
 
         applied_class_ids = set(ClassApplication.objects.filter(tutor=tutor).values_list('class_obj_id', flat=True))
         tutor_avails = list(tutor.availability.all())
-        active_classes = list(Class.objects.filter(tutor=tutor, status__in=['assigned', 'waiting_parent', 'waiting_tutor', 'teaching']))
+        active_classes = list(Class.objects.filter(tutor=tutor, status__in=['teaching', 'waiting_student']))
         classes = []
         for class_obj in qs:
             if class_obj.id in applied_class_ids:
@@ -271,14 +271,14 @@ class TutorService:
     def apply_class(tutor, class_id, data, default_salary):
         class_obj = Class.objects.get(pk=class_id, status='open')
         for new_slot in parse_schedule_text(class_obj.schedule_detail):
-            for teaching_class in Class.objects.filter(tutor=tutor, status__in=['assigned', 'waiting_tutor', 'teaching']):
+            for teaching_class in Class.objects.filter(tutor=tutor, status__in=['teaching', 'waiting_student']):
                 for old_slot in parse_schedule_text(teaching_class.schedule_detail):
                     overlap = new_slot.get('dayOfWeek') == old_slot.get('dayOfWeek') and not (new_slot['endTime'] <= old_slot['startTime'] or new_slot['startTime'] >= old_slot['endTime'])
                     if overlap:
                         return None, class_obj, f'Lịch lớp này trùng với lớp đang dạy: {teaching_class.subject_name}.'
         
         class_obj.tutor = tutor
-        class_obj.status = 'assigned'
+        class_obj.status = 'teaching' if class_obj.enrollments.exists() else 'waiting_student'
         class_obj.save(update_fields=['tutor', 'status', 'updated_at'])
         
         expected_salary = data.get('expectedSalary') or default_salary
@@ -321,7 +321,7 @@ class TutorService:
         qs = Class.objects.filter(tutor=tutor)
         if filters.get('status'):
             return qs.filter(status=filters['status'].lower())
-        return qs.filter(status__in=['waiting_parent', 'waiting_tutor', 'assigned', 'teaching', 'paused', 'completed', 'cancelled'])
+        return qs.filter(status__in=['teaching', 'waiting_student', 'completed', 'cancelled'])
 
     @staticmethod
     def get_teaching_class(tutor, class_id):
@@ -330,7 +330,7 @@ class TutorService:
     @staticmethod
     def get_timetable(tutor):
         timetable = []
-        for class_obj in Class.objects.filter(tutor=tutor, status__in=['assigned', 'waiting_parent', 'waiting_tutor', 'teaching']).order_by('subject_name'):
+        for class_obj in Class.objects.filter(tutor=tutor, status__in=['teaching', 'waiting_student']).order_by('subject_name'):
             for slot in parse_schedule_text(class_obj.schedule_detail):
                 timetable.append({
                     'classId': class_obj.id,

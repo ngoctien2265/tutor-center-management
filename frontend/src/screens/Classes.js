@@ -7,21 +7,17 @@ import './Dashboard.css';
 import './ListPage.css';
 
 function derivedStatus(cls) {
-  if (cls.status === 'staff_pending') return 'staff_pending';
-  if (cls.status === 'pending_admin') return 'pending_admin';
-  if (cls.status === 'waiting_parent') return 'waiting_parent';
   if (cls.status === 'cancelled') return 'cancelled';
   if (cls.status === 'completed') return 'completed';
-  if (cls.status === 'teaching' || cls.status === 'assigned' || cls.tutor_name || cls.tutor?.id || cls.tutor) return 'teaching';
+  if (cls.status === 'waiting_student') return 'waiting_student';
+  if (cls.status === 'teaching' || cls.tutor_name || cls.tutor?.id || cls.tutor) return 'teaching';
   return 'open';
 }
 
 function statusText(status) {
   return {
-    staff_pending: 'Chờ nhân viên xử lý',
-    pending_admin: 'Chờ duyệt',
     open: 'Đang tìm gia sư',
-    waiting_parent: 'Chờ phụ huynh xác nhận',
+    waiting_student: 'Đang chờ học viên',
     teaching: 'Đang dạy',
     completed: 'Hoàn thành',
     cancelled: 'Đã hủy',
@@ -30,10 +26,8 @@ function statusText(status) {
 
 function statusClass(status) {
   return {
-    staff_pending: 'status-yellow',
-    pending_admin: 'status-yellow',
     open: 'status-orange',
-    waiting_parent: 'status-blue',
+    waiting_student: 'status-yellow',
     teaching: 'active',
     completed: 'status-blue',
     cancelled: 'locked',
@@ -64,8 +58,8 @@ function Classes() {
   }, [withStatus, query]);
 
   const reviewClass = async (cls, decision) => {
-    if (cls.displayStatus !== 'pending_admin') {
-      toast.info('Chỉ xử lý duyệt/từ chối với lớp đang chờ duyệt.');
+    if (cls.displayStatus !== 'open') {
+      toast.info('Chỉ xử lý duyệt/từ chối với lớp đang tìm gia sư.');
       return;
     }
     try {
@@ -83,7 +77,7 @@ function Classes() {
       <section className="stat-row">
         <article className="admin-stat"><p>Tổng lớp học</p><h3>{items.length}</h3></article>
         <article className="admin-stat"><p>Đang dạy</p><h3 style={{ color: '#16a34a' }}>{withStatus.filter((c) => c.displayStatus === 'teaching').length}</h3></article>
-        <article className="admin-stat"><p>Chờ duyệt</p><h3 style={{ color: '#d97706' }}>{withStatus.filter((c) => c.displayStatus === 'pending_admin').length}</h3></article>
+        <article className="admin-stat"><p>Đang tìm gia sư</p><h3 style={{ color: '#d97706' }}>{withStatus.filter((c) => c.displayStatus === 'open').length}</h3></article>
         <article className="admin-stat"><p>Hoàn thành</p><h3 style={{ color: '#2563eb' }}>{withStatus.filter((c) => c.displayStatus === 'completed').length}</h3></article>
       </section>
       <section className="table-card">
@@ -100,7 +94,7 @@ function Classes() {
               <td><strong>{Number(cls.tuition_fee || 0).toLocaleString('vi-VN')}đ</strong></td>
               <td>{cls.schedule_detail || '-'}</td>
               <td className="action-buttons">
-                {cls.displayStatus === 'pending_admin' ? (
+                {cls.displayStatus === 'open' ? (
                   <>
                     <button className="icon-button success" title="Duyệt lớp học" onClick={() => reviewClass(cls, 'APPROVED')}>✓</button>
                     <button className="icon-button danger" title="Từ chối lớp học" onClick={() => reviewClass(cls, 'REJECTED')}>×</button>

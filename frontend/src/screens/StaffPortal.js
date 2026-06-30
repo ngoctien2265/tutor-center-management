@@ -31,17 +31,15 @@ const initialClassForm = {
 
 const statusVi = {
   PENDING: 'Chờ duyệt', PENDING_REVIEW: 'Chờ duyệt', APPROVED: 'Đã duyệt', REJECTED: 'Từ chối',
-  staff_pending: 'Chờ nhân viên xử lý', pending_admin: 'Chờ admin duyệt', open: 'Đang tìm gia sư',
-  waiting_parent: 'Chờ phụ huynh xác nhận', waiting_tutor: 'Chờ gia sư xác nhận', waiting_student: 'Đang chờ học viên', assigned: 'Đang học', teaching: 'Đang học',
-  paused: 'Tạm dừng', completed: 'Hoàn thành', cancelled: 'Đã hủy', unpaid: 'Chưa thanh toán', paid: 'Đã thanh toán',
+  open: 'Đang tìm gia sư', waiting_student: 'Đang chờ học viên', teaching: 'Đang dạy',
+  completed: 'Hoàn thành', cancelled: 'Đã hủy', unpaid: 'Chưa thanh toán', paid: 'Đã thanh toán',
   TAUGHT: 'Đã dạy', ABSENCE: 'Nghỉ', MAKEUP: 'Dạy bù', CONFIRMED: 'Đã duyệt',
   PRESENT: 'Đã dạy', ABSENT: 'Nghỉ', LATE: 'Đi trễ', ABSENCE_ONLY: 'Nghỉ', RESCHEDULE: 'Dạy bù', ABSENCE_WITH_MAKEUP: 'Dạy bù',
   'Đã dạy': 'Đã dạy', 'Nghỉ': 'Nghỉ', 'Dạy bù': 'Dạy bù', 'Đã duyệt': 'Đã duyệt',
 };
 
 const classStatusFilterOptions = [
-  'staff_pending', 'pending_admin', 'open', 'waiting_parent', 'waiting_tutor',
-  'waiting_student', 'assigned', 'teaching', 'paused', 'completed', 'cancelled',
+  'completed', 'cancelled', 'teaching', 'open', 'waiting_student',
 ];
 
 const money = (value) => Number(value || 0).toLocaleString('vi-VN') + 'đ';
@@ -147,7 +145,7 @@ function StaffPortal() {
   useEffect(() => { load(); }, []);
 
   const requestRows = useMemo(() => classes
-    .filter((cls) => cls.status === 'staff_pending')
+    .filter((cls) => cls.status === 'open' && !cls.tutor)
     .map((cls) => ({
       id: cls.id,
       parent: cls.student?.fullName || cls.student?.full_name || 'Học viên',
@@ -160,7 +158,7 @@ function StaffPortal() {
       teachingMode: cls.teaching_mode || 'offline',
       expectedHourlyRate: cls.expected_hourly_rate || 0,
       requirements: cls.requirements || '',
-      status: cls.status || 'staff_pending',
+      status: cls.status || 'open',
     })), [classes]);
 
   const tutorRows = useMemo(() => tutors.map((t) => {
@@ -359,11 +357,11 @@ function StaffPortal() {
   };
   const inviteTutor = async (tutor) => {
     if (!selectedRequest) { toast.warning('Vui lòng chọn yêu cầu phụ huynh trước.'); return; }
-    try { await axios.post(`/v1/staff/tutors/${tutor.id}/invite`, { classId: selectedRequest.id }); toast.success('Đã gửi gia sư cho phụ huynh xác nhận.'); setSelectedRequest(null); load(); setTab('requests'); }
+    try { await axios.post(`/v1/staff/tutors/${tutor.id}/invite`, { classId: selectedRequest.id }); toast.success('Đã gán gia sư cho lớp.'); setSelectedRequest(null); load(); setTab('requests'); }
     catch (error) { toast.error(error.response?.data?.message || 'Không gửi được lời mời.'); }
   };
   const reviewTutorApplication = async (applicationId, decision) => {
-    try { await axios.post(`/v1/staff/applications/${applicationId}/review`, { status: decision }); toast.success(decision === 'APPROVED' ? 'Đã duyệt gia sư, chờ phụ huynh xác nhận.' : 'Đã từ chối gia sư.'); load(); }
+    try { await axios.post(`/v1/staff/applications/${applicationId}/review`, { status: decision }); toast.success(decision === 'APPROVED' ? 'Đã duyệt gia sư.' : 'Đã từ chối gia sư.'); load(); }
     catch (error) { toast.error(error.response?.data?.message || 'Không xử lý được đơn nhận lớp.'); }
   };
   const changeClassStatus = async (classId, nextStatus) => {
@@ -384,7 +382,7 @@ function StaffPortal() {
   const resetFilter = () => { setFilter({ subject: '', grade: '', schedule: '', area: '' }); setHasSearched(false); setSelectedRequest(null); };
 
   const recentRequests = requestRows.slice(0, 4);
-  const activeClasses = dashboard.activeClasses || classes.filter((cls) => ['assigned', 'teaching', 'waiting_parent', 'waiting_tutor'].includes(cls.status)).length || 0;
+  const activeClasses = dashboard.activeClasses || classes.filter((cls) => ['teaching', 'waiting_student'].includes(cls.status)).length || 0;
   const completedClasses = dashboard.completedClasses || classes.filter((cls) => cls.status === 'completed').length || 0;
   const readyTutors = tutors.length || 0;
   const totalCollected = paymentRows.filter((row) => row.status === 'paid').reduce((sum, row) => sum + Number(row.amount || 0), 0);
@@ -460,7 +458,7 @@ function StaffPortal() {
           <div className="staff-inline-actions wrap">
             <button className="staff-light-btn" onClick={() => setSelectedClass(cls)}>Xem chi tiết</button>
             {cls.status === 'open' && <button className="staff-light-btn" onClick={() => changeClassStatus(cls.id, 'cancelled')}>Hủy lớp</button>}
-            {['teaching', 'assigned', 'waiting_parent'].includes(cls.status) && <button className="staff-light-btn" onClick={() => changeClassStatus(cls.id, 'completed')}>Hoàn thành</button>}
+            {['teaching', 'waiting_student'].includes(cls.status) && <button className="staff-light-btn" onClick={() => changeClassStatus(cls.id, 'completed')}>Hoàn thành</button>}
             {cls.status === 'cancelled' && <button className="staff-light-btn" onClick={() => changeClassStatus(cls.id, 'open')}>Mở lại</button>}
           </div>
         </article>) : <p className="muted">{classes.length ? 'Không có lớp học ở trạng thái này.' : 'Chưa có lớp học.'}</p>}
@@ -471,7 +469,7 @@ function StaffPortal() {
       <div className="staff-inline-actions" style={{ marginBottom: '16px' }}>
         <button className="staff-light-btn" onClick={() => setSelectedClass(null)}>← Quay lại danh sách</button>
         {selectedClass.status === 'open' && <button className="staff-light-btn" onClick={() => { changeClassStatus(selectedClass.id, 'cancelled'); setSelectedClass(null); }}>Hủy lớp</button>}
-        {['teaching', 'assigned', 'waiting_parent'].includes(selectedClass.status) && <button className="staff-light-btn" onClick={() => { changeClassStatus(selectedClass.id, 'completed'); setSelectedClass(null); }}>Hoàn thành</button>}
+        {['teaching', 'waiting_student'].includes(selectedClass.status) && <button className="staff-light-btn" onClick={() => { changeClassStatus(selectedClass.id, 'completed'); setSelectedClass(null); }}>Hoàn thành</button>}
         {selectedClass.status === 'cancelled' && <button className="staff-light-btn" onClick={() => { changeClassStatus(selectedClass.id, 'open'); setSelectedClass(null); }}>Mở lại</button>}
       </div>
       <section className="staff-card wide">

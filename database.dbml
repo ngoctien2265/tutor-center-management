@@ -129,7 +129,7 @@ Table classes {
   admin_note text
   teaching_mode varchar(10) [default: 'offline', note: 'online, offline']
   expected_hourly_rate decimal(10,2) [default: 0]
-  status varchar(20) [default: 'open', note: 'staff_pending, pending_admin, open, waiting_parent, waiting_tutor, assigned, teaching, paused, completed, cancelled']
+  status varchar(20) [default: 'open', note: 'completed, cancelled, teaching, open, waiting_student']
   created_at timestamp [default: `now()`]
   updated_at timestamp [default: `now()`]
 

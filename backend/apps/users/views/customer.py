@@ -78,7 +78,7 @@ def student_has_schedule_conflict(student, class_obj):
     if not new_slots:
         return False
     active_enrollment_statuses = ['unpaid', 'paid', 'active', 'overdue']
-    active_class_statuses = ['waiting_parent', 'waiting_tutor', 'assigned', 'teaching']
+    active_class_statuses = ['teaching', 'waiting_student']
     existing = Enrollment.objects.select_related('class_id').filter(
         student_id=student,
         status__in=active_enrollment_statuses,
@@ -172,8 +172,8 @@ def class_payload(enrollment):
         'confirmedTeachingLogs': confirmed_logs,
         'status': cls.status.upper(),
         'enrollmentStatus': enrollment.status,
-        'needsParentConfirmation': cls.status == 'waiting_parent' and bool(cls.tutor_id),
-        'confirmationMessage': 'Nhân viên đã gửi gia sư phù hợp, vui lòng xác nhận để lớp chuyển sang Đang học.' if cls.status == 'waiting_parent' and cls.tutor_id else '',
+        'needsParentConfirmation': False,
+        'confirmationMessage': '',
             'student': StudentSerializer(enrollment.student_id).data,
     'tutor': {
         'id': tutor.id,
@@ -288,7 +288,7 @@ def class_requests(request):
         tuition_fee=monthly_salary.quantize(Decimal('1')),
         address_teaching=request.data.get('area') or request.data.get('location') or target_student.address or '',
         requirements=request.data.get('requirements') or '',
-        status='staff_pending',
+        status='open',
     )
     enrollment = Enrollment.objects.create(class_id=cls, student_id=target_student, status='unpaid')
     Transaction.objects.create(user_id=request.user, enrollment_id=enrollment, amount=monthly_salary, type='tuition_fee', status='pending')
@@ -347,7 +347,7 @@ def timetable(request):
     if guard:
         return guard
     items = []
-    for enrollment in customer_enrollments(student).filter(class_id__status__in=['open', 'assigned', 'teaching']):
+    for enrollment in customer_enrollments(student).filter(class_id__status__in=['open', 'teaching', 'waiting_student']):
         cls = enrollment.class_id
         for slot in parse_schedule_text(cls.schedule_detail):
             items.append({
@@ -411,8 +411,8 @@ def confirm_tutor(request, class_id):
         return fail('Không tìm thấy lớp của học viên.', status.HTTP_404_NOT_FOUND)
     cls = enrollment.class_id
     decision = request.data.get('decision') or request.data.get('status') or 'APPROVED'
-    if cls.status != 'waiting_parent' or not cls.tutor_id:
-        return fail('Lớp này chưa có gia sư chờ phụ huynh xác nhận.')
+    if cls.status not in ['teaching', 'waiting_student'] or not cls.tutor_id:
+        return fail('Lớp này chưa có gia sư.')
     if decision in ['APPROVED', 'approved', 'agree', 'ACCEPTED', 'accepted']:
         cls.status = 'teaching'
         if enrollment.status not in ['paid', 'completed']:

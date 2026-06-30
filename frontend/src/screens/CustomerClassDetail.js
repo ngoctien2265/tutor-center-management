@@ -25,7 +25,7 @@ const tabLabels = {
 };
 
 function statusVi(status) {
-  return ({ unpaid: 'Chưa thanh toán', paid: 'Đã thanh toán', active: 'Đang học', completed: 'Hoàn thành', overdue: 'Quá hạn', STAFF_PENDING: 'Chờ nhân viên xử lý', PENDING_ADMIN: 'Chờ admin duyệt', OPEN: 'Đang tìm gia sư', WAITING_PARENT: 'Chờ phụ huynh xác nhận', WAITING_TUTOR: 'Chờ gia sư xác nhận', ASSIGNED: 'Đang học', TEACHING: 'Đang học', COMPLETED: 'Hoàn thành', CANCELLED: 'Đã hủy', APPROVED: 'Đã duyệt', PENDING: 'Chờ duyệt', REJECTED: 'Từ chối' }[status] || status || 'Đang học');
+  return ({ unpaid: 'Chưa thanh toán', paid: 'Đã thanh toán', active: 'Đang học', completed: 'Hoàn thành', overdue: 'Quá hạn', OPEN: 'Đang tìm gia sư', WAITING_STUDENT: 'Đang chờ học viên', TEACHING: 'Đang dạy', COMPLETED: 'Hoàn thành', CANCELLED: 'Đã hủy', APPROVED: 'Đã duyệt', PENDING: 'Chờ duyệt', REJECTED: 'Từ chối' }[status] || status || 'Đang học');
 }
 
 function paymentRowsFromApi(payments) {
